@@ -1,0 +1,43 @@
+{
+  "name": "farm-game-ecs",
+  "version": "1.0.0",
+  "description": "🏡 农庄卡牌：田园物语 - ECS架构的卡牌种地游戏",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/engine.js",
+    "build": "node src/index.js",
+    "test": "node src/test.js",
+    "debug": "node src/index.js --debug",
+    "profile": "node src/index.js --profile"
+  },
+  "keywords": [
+    "农庄",
+    "卡牌",
+    "游戏",
+    "ECS",
+    "肉鸽",
+    "种地",
+    "模拟器"
+  ],
+  "author": "资深ECS系统设计专家",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "eslint": "^8.54.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "figlet": "^1.7.0",
+    "prompt-sync": "^4.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
