@@ -8,7 +8,8 @@
 import {
   BaseSystem,
   SystemManager,
-  createDefaultSystems
+  createDefaultSystems,
+  CardPlaySystem
 } from './systems';
 
 import {
@@ -17,7 +18,8 @@ import {
   getComponent,
   addComponent,
   removeComponent,
-  hasComponent
+  hasComponent,
+  Position
 } from './components';
 
 // ==========================================
@@ -61,6 +63,19 @@ export class FarmGameEngine {
     
     // 初始化系统
     this.initializeSystems();
+    
+    // 初始抽5张手牌
+    const player = this.findEntity(e => e.identity?.entityType === '玩家');
+    if (player?.deck && player?.hand) {
+      console.log('🎴 抽取初始手牌:');
+      for (let i = 0; i < 5; i++) {
+        const card = player.deck.drawCard();
+        if (card) {
+          player.hand.addCard(card);
+          console.log(`  - ${card.identity.name}`);
+        }
+      }
+    }
     
     console.log(`✅ 引擎初始化完成！`);
   }
@@ -545,6 +560,53 @@ export function giveResource(type: string, amount: number): boolean {
   }
   
   return false;
+}
+
+// 打出卡牌
+export function playCard(cardId: string, position?: Position): boolean {
+  const engine = FarmGameEngine.getInstance();
+  const player = engine.findEntity(e => e.identity?.entityType === '玩家');
+  const cardPlaySystem = engine.getSystemManager().getSystem<CardPlaySystem>('卡牌玩法');
+  
+  if (!player || !cardPlaySystem) return false;
+  
+  const card = cardPlaySystem.playCard(player, cardId, position);
+  if (card) {
+    engine.addEntity(card);
+    return true;
+  }
+  
+  return false;
+}
+
+// 弃掉手牌
+export function discardCard(cardId: string): boolean {
+  const engine = FarmGameEngine.getInstance();
+  const player = engine.findEntity(e => e.identity?.entityType === '玩家');
+  const cardPlaySystem = engine.getSystemManager().getSystem<CardPlaySystem>('卡牌玩法');
+  
+  if (!player || !cardPlaySystem) return false;
+  
+  return cardPlaySystem.discardCard(player, cardId);
+}
+
+// 获取当前手牌
+export function getHandCards(): any[] {
+  const engine = FarmGameEngine.getInstance();
+  const player = engine.findEntity(e => e.identity?.entityType === '玩家');
+  
+  return player?.hand?.cards || [];
+}
+
+// 获取当前能量
+export function getCurrentEnergy(): { current: number, max: number } {
+  const engine = FarmGameEngine.getInstance();
+  const player = engine.findEntity(e => e.identity?.entityType === '玩家');
+  
+  return {
+    current: player?.energy?.current || 0,
+    max: player?.energy?.max || 0
+  };
 }
 
 // ==========================================
