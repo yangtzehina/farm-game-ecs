@@ -290,6 +290,78 @@ export declare class EnergyComponent {
     spend(amount: number): boolean;
     regen(): void;
 }
+export type QuestType = '主线' | '日常' | '周常' | '活动';
+export type QuestObjectiveType = '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | '完成任务';
+export interface QuestObjective {
+    id: string;
+    type: QuestObjectiveType;
+    target: string;
+    requiredAmount: number;
+    currentAmount: number;
+    completed: boolean;
+}
+export interface QuestReward {
+    type: '资源' | '卡牌' | '道具' | '经验' | '金币';
+    target: string;
+    amount: number;
+}
+export interface Quest {
+    id: string;
+    type: QuestType;
+    title: string;
+    description: string;
+    objectives: QuestObjective[];
+    rewards: QuestReward[];
+    unlocked: boolean;
+    completed: boolean;
+    claimed: boolean;
+    unlockCondition?: {
+        type: QuestObjectiveType;
+        target: string;
+        amount: number;
+    };
+    dailyReset?: boolean;
+    priority: number;
+}
+/**
+ * QuestComponent - 任务组件
+ * 玩家的任务列表和进度
+ */
+export declare class QuestComponent {
+    static readonly TYPE = "quest";
+    quests: Quest[];
+    completedQuests: string[];
+    dailyResetTime: number;
+    lastDailyReset: number;
+    /**
+     * 添加新任务
+     */
+    addQuest(quest: Quest): boolean;
+    /**
+     * 更新任务进度
+     */
+    updateProgress(objectiveType: QuestObjectiveType, target: string, amount?: number): void;
+    /**
+     * 检查任务是否完成
+     */
+    private checkQuestCompletion;
+    /**
+     * 领取任务奖励
+     */
+    claimRewards(questId: string): QuestReward[] | false;
+    /**
+     * 重置日常任务
+     */
+    resetDailyQuests(): void;
+    /**
+     * 获取可领取奖励的任务
+     */
+    getClaimableQuests(): Quest[];
+    /**
+     * 获取进行中的任务
+     */
+    getActiveQuests(): Quest[];
+}
 /**
  * WorldComponent - 世界状态组件
  */
@@ -324,6 +396,37 @@ export declare class GameStateComponent {
     increaseCombo(): void;
     resetCombo(): void;
 }
+/**
+ * ComboComponent - 组合技组件
+ * 跟踪激活的组合技和效果
+ */
+export declare class ComboComponent {
+    static readonly TYPE = "combo";
+    activeCombos: Array<{
+        id: string;
+        name: string;
+        description: string;
+        effect: string;
+        activatedAt: number;
+        duration?: number;
+        strength: number;
+        active: boolean;
+    }>;
+    activateCombo(id: string, name: string, description: string, effect: string, strength: number, duration?: number): boolean;
+    deactivateCombo(id: string): boolean;
+    isComboActive(id: string): boolean;
+    getActiveCombos(): {
+        id: string;
+        name: string;
+        description: string;
+        effect: string;
+        activatedAt: number;
+        duration?: number;
+        strength: number;
+        active: boolean;
+    }[];
+    update(dt: number): void;
+}
 export declare const COMPONENT_REGISTRY: {
     identity: typeof IdentityComponent;
     position: typeof PositionComponent;
@@ -345,6 +448,8 @@ export declare const COMPONENT_REGISTRY: {
     deck: typeof DeckComponent;
     hand: typeof HandComponent;
     energy: typeof EnergyComponent;
+    combo: typeof ComboComponent;
+    quest: typeof QuestComponent;
 };
 export declare class EntityFactory {
     static createCardEntity(type: '作物' | '动物' | '工具' | '建筑' | '人物', config?: any): any;

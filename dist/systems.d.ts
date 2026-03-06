@@ -98,6 +98,48 @@ export declare class GameStateSystem extends BaseSystem {
     private levelComplete;
     private gameOver;
 }
+export declare class ComboSystem extends BaseSystem {
+    private readonly COMBO_CONFIG;
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    private checkComboCondition;
+    private activateCombo;
+    private deactivateCombo;
+    private applyComboEffects;
+    getAllComboConfigs(): ({
+        id: string;
+        name: string;
+        description: string;
+        requiredCards: string[];
+        effect: string;
+        strength: number;
+        type: string;
+        duration?: undefined;
+        requiredCondition?: undefined;
+    } | {
+        id: string;
+        name: string;
+        description: string;
+        requiredCards: string[];
+        effect: string;
+        strength: number;
+        type: string;
+        duration: number;
+        requiredCondition?: undefined;
+    } | {
+        id: string;
+        name: string;
+        description: string;
+        requiredCondition: (entities: any[]) => boolean;
+        effect: string;
+        strength: number;
+        type: string;
+        requiredCards?: undefined;
+        duration?: undefined;
+    })[];
+}
 export declare class SystemManager {
     static instance: SystemManager;
     systems: BaseSystem[];

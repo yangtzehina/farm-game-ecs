@@ -539,6 +539,183 @@ export class GameStateSystem extends BaseSystem {
     }
 }
 // ==========================================
+// 组合技系统 - Combo System
+// ==========================================
+export class ComboSystem extends BaseSystem {
+    constructor() {
+        super('组合技管理', 45);
+        // 预设组合配置
+        this.COMBO_CONFIG = [
+            {
+                id: 'green_garden',
+                name: '绿色田园',
+                description: '小麦+蔬菜+水果 → 所有作物产量×1.5',
+                requiredCards: ['小麦', '蔬菜', '水果'],
+                effect: 'crop_yield_multiplier',
+                strength: 1.5,
+                type: 'permanent' // 永久生效直到条件不满足
+            },
+            {
+                id: 'animal_paradise',
+                name: '动物天堂',
+                description: '鸡+牛+羊 → 动物自动收集',
+                requiredCards: ['鸡', '牛', '羊'],
+                effect: 'animal_auto_collect',
+                strength: 1,
+                type: 'permanent'
+            },
+            {
+                id: 'industrial_revolution',
+                name: '工业革命',
+                description: '磨坊+工厂+市场 → 生产额外金币',
+                requiredCards: ['磨坊', '工厂', '市场'],
+                effect: 'extra_gold_production',
+                strength: 50, // 每秒额外生产50金币
+                type: 'permanent'
+            },
+            {
+                id: 'nature_force',
+                name: '自然之力',
+                description: '雨水+阳光+肥料 → 所有作物产量×2',
+                requiredCards: ['雨水', '阳光', '肥料'],
+                effect: 'crop_yield_multiplier',
+                strength: 2.0,
+                type: 'temporary',
+                duration: 30000 // 持续30秒
+            },
+            {
+                id: 'harvest_goddess',
+                name: '丰收女神',
+                description: '所有作物升级3次 → 全区域效果',
+                requiredCondition: (entities) => {
+                    // 检查所有作物卡牌是否都升级到至少3级
+                    const cropCards = entities.filter(e => e['crop']);
+                    return cropCards.length > 0 && cropCards.every(crop => crop['identity']?.level >= 3);
+                },
+                effect: 'global_yield_bonus',
+                strength: 1.8, // 所有资源产量×1.8
+                type: 'permanent'
+            }
+        ];
+        this.updateInterval = 1000;
+    }
+    getRequiredComponents() {
+        return ['combo', 'resource'];
+    }
+    filterEntities(entities) {
+        return entities.filter(entity => this.getRequiredComponents().every(type => entity[type]));
+    }
+    update(entities, dt) {
+        const filteredEntities = this.filterEntities(entities);
+        filteredEntities.forEach(player => {
+            const comboComp = player['combo'];
+            // 更新组合持续时间
+            comboComp.update(dt);
+            // 获取所有已打出的卡牌（场上的实体）
+            const fieldCards = entities.filter(e => e['card'] && e['position']);
+            // 检查所有组合条件
+            this.COMBO_CONFIG.forEach(comboConfig => {
+                const isConditionMet = this.checkComboCondition(comboConfig, fieldCards);
+                const isCurrentlyActive = comboComp.isComboActive(comboConfig.id);
+                if (isConditionMet && !isCurrentlyActive) {
+                    // 组合激活
+                    this.activateCombo(player, comboConfig, comboComp);
+                }
+                else if (!isConditionMet && isCurrentlyActive && comboConfig.type === 'permanent') {
+                    // 永久组合条件不再满足，失效
+                    this.deactivateCombo(player, comboConfig, comboComp);
+                }
+            });
+            // 应用激活的组合效果
+            this.applyComboEffects(player, comboComp, entities);
+        });
+    }
+    checkComboCondition(comboConfig, fieldCards) {
+        // 特殊条件组合（丰收女神）
+        if (comboConfig.requiredCondition) {
+            return comboConfig.requiredCondition(fieldCards);
+        }
+        // 卡牌组合检查：是否所有需要的卡牌都在场上
+        const fieldCardNames = fieldCards.map(c => c['identity']?.name);
+        return comboConfig.requiredCards.every((cardName) => fieldCardNames.includes(cardName));
+    }
+    activateCombo(player, comboConfig, comboComp) {
+        const newlyActivated = comboComp.activateCombo(comboConfig.id, comboConfig.name, comboConfig.description, comboConfig.effect, comboConfig.strength, comboConfig.duration);
+        if (newlyActivated) {
+            // 显示激活提示
+            console.log(`🎉 组合技激活! [${comboConfig.name}] ${comboConfig.description}`);
+            // 增加分数奖励
+            if (player['gameState']) {
+                player['gameState'].score += 500;
+            }
+        }
+    }
+    deactivateCombo(player, comboConfig, comboComp) {
+        comboComp.deactivateCombo(comboConfig.id);
+        console.log(`⚠️ 组合技失效! [${comboConfig.name}] 条件不再满足`);
+    }
+    applyComboEffects(player, comboComp, entities) {
+        const activeCombos = comboComp.getActiveCombos();
+        activeCombos.forEach(combo => {
+            switch (combo.effect) {
+                case 'crop_yield_multiplier':
+                    // 所有作物产量乘以 strength
+                    entities.filter(e => e['crop'] && e['production']).forEach(crop => {
+                        // 保存原始效率，避免重复叠加
+                        if (!crop['production']['originalEfficiency']) {
+                            crop['production']['originalEfficiency'] = crop['production']['efficiency'];
+                        }
+                        crop['production']['efficiency'] = crop['production']['originalEfficiency'] * combo.strength;
+                    });
+                    break;
+                case 'animal_auto_collect':
+                    // 所有动物开启自动收集
+                    entities.filter(e => e['animal'] && e['production']).forEach(animal => {
+                        animal['production']['automation'] = true;
+                    });
+                    break;
+                case 'extra_gold_production':
+                    // 额外生产金币
+                    if (player['resource']) {
+                        player['resource'].addResource('金币', combo.strength);
+                    }
+                    break;
+                case 'global_yield_bonus':
+                    // 所有资源产量乘以 strength
+                    entities.filter(e => e['production']).forEach(entity => {
+                        if (!entity['production']['originalEfficiency']) {
+                            entity['production']['originalEfficiency'] = entity['production']['efficiency'];
+                        }
+                        entity['production']['efficiency'] = entity['production']['originalEfficiency'] * combo.strength;
+                    });
+                    break;
+            }
+        });
+        // 移除失效组合的效果
+        const inactiveCombos = comboComp.activeCombos.filter(c => !c.active);
+        inactiveCombos.forEach(combo => {
+            switch (combo.effect) {
+                case 'crop_yield_multiplier':
+                case 'global_yield_bonus':
+                    entities.filter(e => e['production']?.originalEfficiency).forEach(entity => {
+                        entity['production']['efficiency'] = entity['production']['originalEfficiency'];
+                        delete entity['production']['originalEfficiency'];
+                    });
+                    break;
+                case 'animal_auto_collect':
+                    entities.filter(e => e['animal'] && e['production']).forEach(animal => {
+                        animal['production']['automation'] = false;
+                    });
+                    break;
+            }
+        });
+    }
+    // 公共方法：获取所有可用组合
+    getAllComboConfigs() {
+        return [...this.COMBO_CONFIG];
+    }
+}
+// ==========================================
 // 系统管理器 - System Manager
 // ==========================================
 export class SystemManager {
@@ -609,6 +786,7 @@ export function createDefaultSystems() {
         .registerSystem(new UpgradeSystem())
         .registerSystem(new CombatSystem())
         .registerSystem(new EffectSystem())
+        .registerSystem(new ComboSystem())
         .registerSystem(new WorldSystem())
         .registerSystem(new GameStateSystem());
     return systemManager;
