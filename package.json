@@ -27,26 +27,27 @@
   "author": "资深ECS系统设计专家",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "typescript": "^5.3.3",
+    "@babel/core": "^7.20.0",
+    "@babel/preset-env": "^7.20.0",
+    "@types/node": "^20.19.37",
+    "babelify": "^10.0.0",
+    "browserify": "^17.0.0",
+    "cssify": "^1.0.3",
     "eslint": "^8.54.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
-    "@babel/core": "^7.20.0",
-    "@babel/preset-env": "^7.20.0",
-    "babelify": "^10.0.0",
-    "browserify": "^17.0.0",
-    "cssify": "^1.0.3",
     "gh-pages": "^6.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
     "uglifyify": "^5.0.2"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
-    "prompt-sync": "^4.2.0",
-    "buffer": "^6.0.3"
+    "prompt-sync": "^4.2.0"
   },
   "browser": {
     "buffer": false
