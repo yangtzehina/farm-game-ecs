@@ -1,7 +1,7 @@
 {
   "name": "farm-game-ecs",
   "version": "1.0.0",
-  "description": "🏡 农庄卡牌：田园物语 - ECS架构的卡牌种地游戏",
+  "description": "🏡 农庄卡牌：田园物语 - ECS架构的肉鸽种地游戏",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
@@ -10,7 +10,10 @@
     "build": "node src/index.js",
     "test": "node src/test.js",
     "debug": "node src/index.js --debug",
-    "profile": "node src/index.js --profile"
+    "profile": "node src/index.js --profile",
+    "build:ts": "tsc",
+    "build:browser": "browserify src/browser-app.js -t [ babelify ] -o dist/bundle.js && cp src/index.html dist/index.html",
+    "deploy:gh": "npm run build:browser && gh-pages -d dist"
   },
   "keywords": [
     "农庄",
@@ -24,18 +27,30 @@
   "author": "资深ECS系统设计专家",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.10.0",
-    "typescript": "^5.3.3",
+    "@babel/core": "^7.20.0",
+    "@babel/preset-env": "^7.20.0",
+    "@types/node": "^20.19.37",
+    "babelify": "^10.0.0",
+    "browserify": "^17.0.0",
+    "cssify": "^1.0.3",
     "eslint": "^8.54.0",
     "eslint-config-standard": "^17.1.0",
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^6.1.1"
+    "eslint-plugin-promise": "^6.1.1",
+    "gh-pages": "^6.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "uglifyify": "^5.0.2"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
     "prompt-sync": "^4.2.0"
+  },
+  "browser": {
+    "buffer": false
   },
   "engines": {
     "node": ">=18.0.0"

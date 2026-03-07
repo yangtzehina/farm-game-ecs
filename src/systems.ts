@@ -21,7 +21,16 @@ import {
   UpgradeTreeComponent,
   EffectComponent,
   CombatComponent,
-  COMPONENT_REGISTRY
+  DeckComponent,
+  HandComponent,
+  EnergyComponent,
+  Position,
+  COMPONENT_REGISTRY,
+  ComboComponent,
+  QuestComponent,
+  Quest,
+  QuestObjectiveType,
+  QuestReward
 } from './components';
 
 // ==========================================
@@ -262,6 +271,105 @@ export class CardSystem extends BaseSystem {
         card.cooldown = Math.max(0, card.cooldown - dt);
       }
     });
+  }
+}
+
+// ==========================================
+// 卡牌玩法系统 - Card Play System
+// ==========================================
+
+export class CardPlaySystem extends BaseSystem {
+  constructor() {
+    super('卡牌玩法', 55);
+    this.updateInterval = 1000; // 每回合1秒
+  }
+
+  getRequiredComponents(): string[] {
+    return ['deck', 'hand', 'energy', 'gameState'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const filteredEntities = this.filterEntities(entities);
+    
+    filteredEntities.forEach(entity => {
+      const gameState = entity['gameState'] as GameStateComponent;
+      
+      // 只有游戏进行中才处理回合逻辑
+      if (gameState.gamePhase !== '游戏中') return;
+      
+      this.processTurn(entity);
+    });
+  }
+
+  private processTurn(player: any): void {
+    const deck = player['deck'] as DeckComponent;
+    const hand = player['hand'] as HandComponent;
+    const energy = player['energy'] as EnergyComponent;
+    
+    // 1. 恢复能量
+    energy.regen();
+    console.log(`⚡ 能量恢复: ${energy.current}/${energy.max}`);
+    
+    // 2. 抽2张牌
+    for (let i = 0; i < 2; i++) {
+      const card = deck.drawCard();
+      if (card && hand.addCard(card)) {
+        console.log(`🎴 抽到卡牌: ${card.identity.name}`);
+      }
+    }
+    
+    console.log(`🤲 当前手牌: ${hand.cards.map(c => c.identity.name).join(', ')}`);
+  }
+
+  // 打出卡牌（仅做校验和抽离，添加实体逻辑在外层处理）
+  playCard(player: any, cardId: string, position?: Position): any | false {
+    const hand = player['hand'] as HandComponent;
+    const energy = player['energy'] as EnergyComponent;
+
+    // 找到要打出的卡牌
+    const card = hand.removeCard(cardId);
+    if (!card) {
+      console.log('❌ 手牌中没有这张卡');
+      return false;
+    }
+
+    // 检查能量是否足够
+    const cardCost = card['card']?.energyCost || 1;
+    if (!energy.spend(cardCost)) {
+      // 能量不足，放回手牌
+      hand.addCard(card);
+      console.log(`❌ 能量不足，需要${cardCost}点，当前${energy.current}点`);
+      return false;
+    }
+
+    // 设置卡牌位置
+    if (position && card['position']) {
+      card['position'].x = position.x;
+      card['position'].y = position.y;
+    }
+
+    // 卡牌效果触发
+    console.log(`✅ 打出卡牌: ${card.identity.name}，消耗${cardCost}点能量`);
+    return card;
+  }
+
+  // 弃牌
+  discardCard(player: any, cardId: string): boolean {
+    const hand = player['hand'] as HandComponent;
+    const deck = player['deck'] as DeckComponent;
+
+    const card = hand.removeCard(cardId);
+    if (!card) return false;
+
+    deck.discardCard(card);
+    console.log(`🗑️ 弃掉卡牌: ${card.identity.name}`);
+    return true;
   }
 }
 
@@ -636,14 +744,226 @@ export class GameStateSystem extends BaseSystem {
 }
 
 // ==========================================
+// 组合技系统 - Combo System
+// ==========================================
+export class ComboSystem extends BaseSystem {
+  // 预设组合配置
+  private readonly COMBO_CONFIG = [
+    {
+      id: 'green_garden',
+      name: '绿色田园',
+      description: '小麦+蔬菜+水果 → 所有作物产量×1.5',
+      requiredCards: ['小麦', '蔬菜', '水果'],
+      effect: 'crop_yield_multiplier',
+      strength: 1.5,
+      type: 'permanent' // 永久生效直到条件不满足
+    },
+    {
+      id: 'animal_paradise',
+      name: '动物天堂',
+      description: '鸡+牛+羊 → 动物自动收集',
+      requiredCards: ['鸡', '牛', '羊'],
+      effect: 'animal_auto_collect',
+      strength: 1,
+      type: 'permanent'
+    },
+    {
+      id: 'industrial_revolution',
+      name: '工业革命',
+      description: '磨坊+工厂+市场 → 生产额外金币',
+      requiredCards: ['磨坊', '工厂', '市场'],
+      effect: 'extra_gold_production',
+      strength: 50, // 每秒额外生产50金币
+      type: 'permanent'
+    },
+    {
+      id: 'nature_force',
+      name: '自然之力',
+      description: '雨水+阳光+肥料 → 所有作物产量×2',
+      requiredCards: ['雨水', '阳光', '肥料'],
+      effect: 'crop_yield_multiplier',
+      strength: 2.0,
+      type: 'temporary',
+      duration: 30000 // 持续30秒
+    },
+    {
+      id: 'harvest_goddess',
+      name: '丰收女神',
+      description: '所有作物升级3次 → 全区域效果',
+      requiredCondition: (entities: any[]) => {
+        // 检查所有作物卡牌是否都升级到至少3级
+        const cropCards = entities.filter(e => e['crop']);
+        return cropCards.length > 0 && cropCards.every(crop => crop['identity']?.level >= 3);
+      },
+      effect: 'global_yield_bonus',
+      strength: 1.8, // 所有资源产量×1.8
+      type: 'permanent'
+    }
+  ];
+
+  constructor() {
+    super('组合技管理', 45);
+    this.updateInterval = 1000;
+  }
+
+  getRequiredComponents(): string[] {
+    return ['combo', 'resource'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const filteredEntities = this.filterEntities(entities);
+    
+    filteredEntities.forEach(player => {
+      const comboComp = player['combo'] as ComboComponent;
+      
+      // 更新组合持续时间
+      comboComp.update(dt);
+      
+      // 获取所有已打出的卡牌（场上的实体）
+      const fieldCards = entities.filter(e => e['card'] && e['position']);
+      
+      // 检查所有组合条件
+      this.COMBO_CONFIG.forEach(comboConfig => {
+        const isConditionMet = this.checkComboCondition(comboConfig, fieldCards);
+        const isCurrentlyActive = comboComp.isComboActive(comboConfig.id);
+        
+        if (isConditionMet && !isCurrentlyActive) {
+          // 组合激活
+          this.activateCombo(player, comboConfig, comboComp);
+        } else if (!isConditionMet && isCurrentlyActive && comboConfig.type === 'permanent') {
+          // 永久组合条件不再满足，失效
+          this.deactivateCombo(player, comboConfig, comboComp);
+        }
+      });
+
+      // 应用激活的组合效果
+      this.applyComboEffects(player, comboComp, entities);
+    });
+  }
+
+  private checkComboCondition(comboConfig: any, fieldCards: any[]): boolean {
+    // 特殊条件组合（丰收女神）
+    if (comboConfig.requiredCondition) {
+      return comboConfig.requiredCondition(fieldCards);
+    }
+
+    // 卡牌组合检查：是否所有需要的卡牌都在场上
+    const fieldCardNames = fieldCards.map(c => c['identity']?.name);
+    return comboConfig.requiredCards.every((cardName: string) => 
+      fieldCardNames.includes(cardName)
+    );
+  }
+
+  private activateCombo(player: any, comboConfig: any, comboComp: ComboComponent): void {
+    const newlyActivated = comboComp.activateCombo(
+      comboConfig.id,
+      comboConfig.name,
+      comboConfig.description,
+      comboConfig.effect,
+      comboConfig.strength,
+      comboConfig.duration
+    );
+
+    if (newlyActivated) {
+      // 显示激活提示
+      console.log(`🎉 组合技激活! [${comboConfig.name}] ${comboConfig.description}`);
+      
+      // 增加分数奖励
+      if (player['gameState']) {
+        player['gameState'].score += 500;
+      }
+    }
+  }
+
+  private deactivateCombo(player: any, comboConfig: any, comboComp: ComboComponent): void {
+    comboComp.deactivateCombo(comboConfig.id);
+    console.log(`⚠️ 组合技失效! [${comboConfig.name}] 条件不再满足`);
+  }
+
+  private applyComboEffects(player: any, comboComp: ComboComponent, entities: any[]): void {
+    const activeCombos = comboComp.getActiveCombos();
+    
+    activeCombos.forEach(combo => {
+      switch (combo.effect) {
+        case 'crop_yield_multiplier':
+          // 所有作物产量乘以 strength
+          entities.filter(e => e['crop'] && e['production']).forEach(crop => {
+            // 保存原始效率，避免重复叠加
+            if (!crop['production']['originalEfficiency']) {
+              crop['production']['originalEfficiency'] = crop['production']['efficiency'];
+            }
+            crop['production']['efficiency'] = crop['production']['originalEfficiency'] * combo.strength;
+          });
+          break;
+
+        case 'animal_auto_collect':
+          // 所有动物开启自动收集
+          entities.filter(e => e['animal'] && e['production']).forEach(animal => {
+            animal['production']['automation'] = true;
+          });
+          break;
+
+        case 'extra_gold_production':
+          // 额外生产金币
+          if (player['resource']) {
+            player['resource'].addResource('金币', combo.strength);
+          }
+          break;
+
+        case 'global_yield_bonus':
+          // 所有资源产量乘以 strength
+          entities.filter(e => e['production']).forEach(entity => {
+            if (!entity['production']['originalEfficiency']) {
+              entity['production']['originalEfficiency'] = entity['production']['efficiency'];
+            }
+            entity['production']['efficiency'] = entity['production']['originalEfficiency'] * combo.strength;
+          });
+          break;
+      }
+    });
+
+    // 移除失效组合的效果
+    const inactiveCombos = comboComp.activeCombos.filter(c => !c.active);
+    inactiveCombos.forEach(combo => {
+      switch (combo.effect) {
+        case 'crop_yield_multiplier':
+        case 'global_yield_bonus':
+          entities.filter(e => e['production']?.originalEfficiency).forEach(entity => {
+            entity['production']['efficiency'] = entity['production']['originalEfficiency'];
+            delete entity['production']['originalEfficiency'];
+          });
+          break;
+
+        case 'animal_auto_collect':
+          entities.filter(e => e['animal'] && e['production']).forEach(animal => {
+            animal['production']['automation'] = false;
+          });
+          break;
+      }
+    });
+  }
+
+  // 公共方法：获取所有可用组合
+  getAllComboConfigs() {
+    return [...this.COMBO_CONFIG];
+  }
+}
+
+// ==========================================
 // 系统管理器 - System Manager
 // ==========================================
 
 export class SystemManager {
   public static instance: SystemManager;
   
-  private systems: BaseSystem[] = [];
-  private entities: any[] = [];
+  public systems: BaseSystem[] = [];
+  public entities: any[] = [];
   private currentTime: number = Date.now();
   private timeSinceLastUpdate: number = 0;
 
@@ -713,6 +1033,237 @@ export class SystemManager {
 }
 
 // ==========================================
+// 任务系统 - Quest System
+// ==========================================
+
+export class QuestSystem extends BaseSystem {
+  constructor() {
+    super('任务管理', 45);
+    this.updateInterval = 1000;
+  }
+
+  getRequiredComponents(): string[] {
+    return ['quest', 'resource'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const filteredEntities = this.filterEntities(entities);
+    
+    filteredEntities.forEach(entity => {
+      const questComp = entity['quest'] as QuestComponent;
+      
+      // 重置日常任务
+      questComp.resetDailyQuests();
+      
+      // 检查任务解锁条件
+      this.checkQuestUnlocks(entity, questComp);
+      
+      // 自动发放已完成任务的奖励
+      this.autoClaimRewards(entity, questComp);
+    });
+  }
+
+  /**
+   * 检查任务解锁条件
+   */
+  private checkQuestUnlocks(entity: any, questComp: QuestComponent): void {
+    questComp.quests.forEach(quest => {
+      if (quest.unlocked || !quest.unlockCondition) return;
+      
+      const condition = quest.unlockCondition;
+      let conditionMet = false;
+      
+      switch (condition.type) {
+        case '收集资源':
+          conditionMet = entity['resource']?.resources[condition.target] >= condition.amount;
+          break;
+        case '达到等级':
+          conditionMet = entity['character']?.level >= condition.amount;
+          break;
+        case '完成任务':
+          conditionMet = questComp.completedQuests.includes(condition.target);
+          break;
+        case '拥有卡牌':
+          conditionMet = entity['deck']?.library.some(
+            (card: any) => card.identity?.name === condition.target
+          ) ?? false;
+          break;
+      }
+      
+      if (conditionMet) {
+        quest.unlocked = true;
+        console.log(`🔓 任务解锁: ${quest.title}`);
+      }
+    });
+  }
+
+  /**
+   * 自动发放已完成任务的奖励
+   */
+  private autoClaimRewards(entity: any, questComp: QuestComponent): void {
+    const claimable = questComp.getClaimableQuests();
+    
+    claimable.forEach(quest => {
+      const rewards = questComp.claimRewards(quest.id);
+      if (rewards) {
+        this.giveRewards(entity, rewards);
+        console.log(`🎁 领取任务奖励: ${quest.title}`);
+      }
+    });
+  }
+
+  /**
+   * 发放奖励
+   */
+  private giveRewards(entity: any, rewards: QuestReward[]): void {
+    rewards.forEach(reward => {
+      switch (reward.type) {
+        case '资源':
+          if (entity['resource']) {
+            entity['resource'].addResource(reward.target, reward.amount);
+            console.log(`   获得 ${reward.amount} ${reward.target}`);
+          }
+          break;
+        case '金币':
+          if (entity['resource']) {
+            entity['resource'].addResource('金币', reward.amount);
+            console.log(`   获得 ${reward.amount} 金币`);
+          }
+          break;
+        case '经验':
+          if (entity['character']) {
+            entity['character'].addExperience(reward.amount);
+            console.log(`   获得 ${reward.amount} 经验值`);
+          }
+          break;
+        case '卡牌':
+          if (entity['deck']) {
+            // TODO: 实现卡牌奖励逻辑
+            console.log(`   获得卡牌: ${reward.target}`);
+          }
+          break;
+      }
+    });
+  }
+
+  /**
+   * 外部调用：更新任务进度
+   */
+  updateQuestProgress(
+    entity: any,
+    objectiveType: QuestObjectiveType,
+    target: string,
+    amount: number = 1
+  ): void {
+    if (!entity['quest']) return;
+    
+    const questComp = entity['quest'] as QuestComponent;
+    questComp.updateProgress(objectiveType, target, amount);
+  }
+
+  /**
+   * 添加预设的初始任务
+   */
+  addDefaultQuests(entity: any): void {
+    if (!entity['quest']) return;
+    
+    const questComp = entity['quest'] as QuestComponent;
+    
+    // 主线任务1
+    questComp.addQuest({
+      id: 'main_1',
+      type: '主线',
+      title: '初入农庄',
+      description: '收集10个作物资源',
+      objectives: [
+        {
+          id: 'obj_1',
+          type: '收集资源',
+          target: '作物',
+          requiredAmount: 10,
+          currentAmount: 0,
+          completed: false
+        }
+      ],
+      rewards: [
+        { type: '金币', target: '', amount: 100 },
+        { type: '资源', target: '木材', amount: 50 }
+      ],
+      unlocked: true,
+      completed: false,
+      claimed: false,
+      priority: 1
+    });
+    
+    // 主线任务2
+    questComp.addQuest({
+      id: 'main_2',
+      type: '主线',
+      title: '积累财富',
+      description: '收集50个金币',
+      objectives: [
+        {
+          id: 'obj_2',
+          type: '收集资源',
+          target: '金币',
+          requiredAmount: 50,
+          currentAmount: 0,
+          completed: false
+        }
+      ],
+      rewards: [
+        { type: '经验', target: '', amount: 200 },
+        { type: '资源', target: '石头', amount: 30 }
+      ],
+      unlocked: false,
+      completed: false,
+      claimed: false,
+      unlockCondition: {
+        type: '完成任务',
+        target: 'main_1',
+        amount: 1
+      },
+      priority: 2
+    });
+    
+    // 日常任务
+    questComp.addQuest({
+      id: 'daily_1',
+      type: '日常',
+      title: '每日劳作',
+      description: '生产5个作物资源',
+      objectives: [
+        {
+          id: 'obj_daily_1',
+          type: '生产物品',
+          target: '作物',
+          requiredAmount: 5,
+          currentAmount: 0,
+          completed: false
+        }
+      ],
+      rewards: [
+        { type: '金币', target: '', amount: 50 },
+        { type: '资源', target: '作物', amount: 10 }
+      ],
+      unlocked: true,
+      completed: false,
+      claimed: false,
+      dailyReset: true,
+      priority: 10
+    });
+    
+    console.log('📋 初始任务已添加');
+  }
+}
+
+// ==========================================
 // 默认系统配置
 // ==========================================
 
@@ -723,11 +1274,14 @@ export function createDefaultSystems(): SystemManager {
     .registerSystem(new ResourceSystem())
     .registerSystem(new ProductionSystem())
     .registerSystem(new CardSystem())
+    .registerSystem(new CardPlaySystem())
     .registerSystem(new UpgradeSystem())
     .registerSystem(new CombatSystem())
     .registerSystem(new EffectSystem())
+    .registerSystem(new ComboSystem())
     .registerSystem(new WorldSystem())
-    .registerSystem(new GameStateSystem());
+    .registerSystem(new GameStateSystem())
+    .registerSystem(new QuestSystem());
 
   return systemManager;
 }

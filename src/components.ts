@@ -116,11 +116,11 @@ export class ResourceComponent {
   };
 
   public maxStorage: { [key: string]: number } = {
-    '金币': 1000,
-    '木材': 500,
-    '石头': 300,
-    '作物': 200,
-    '动物': 100
+    '金币': 10000,
+    '木材': 2000,
+    '石头': 1500,
+    '作物': 1000,
+    '动物': 500
   };
 
   addResource(type: string, amount: number): boolean {
@@ -193,8 +193,8 @@ export class CropComponent {
   public growthStage: number = 0;
   public maxGrowthStage: number = 4;
   public growthTime: number = 0;
-  public growTimePerStage: number = 5000; // 5秒每阶段
-  public yield: number = 1;
+  public growTimePerStage: number = 2500; // 2.5秒每阶段，4阶段总共10秒对应小麦生长周期
+  public yield: number = 2;
   public quality: number = 1.0;
   public fertilityBonus: number = 0;
 
@@ -355,7 +355,8 @@ export class UpgradeComponent {
   }> = [];
   public upgradeCost: { [key: string]: number } = {
     '金币': 100,
-    '木材': 50
+    '木材': 10,
+    '作物':5
   };
 
   canUpgrade(
@@ -448,6 +449,237 @@ export class EffectComponent {
 }
 
 // ==========================================
+// 卡牌玩法核心组件 - Card Gameplay Core Components
+// ==========================================
+
+/**
+ * DeckComponent - 牌组组件
+ * 玩家的卡牌库、抽牌堆、弃牌堆
+ */
+export class DeckComponent {
+  public static readonly TYPE = 'deck';
+  
+  public library: any[] = []; // 牌库：所有拥有的卡牌
+  public drawPile: any[] = []; // 抽牌堆：待抽的卡牌
+  public discardPile: any[] = []; // 弃牌堆：打出/弃掉的卡牌
+
+  shuffleDrawPile(): void {
+    for (let i = this.drawPile.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.drawPile[i], this.drawPile[j]] = [this.drawPile[j], this.drawPile[i]];
+    }
+  }
+
+  drawCard(): any | null {
+    if (this.drawPile.length === 0) {
+      // 抽牌堆空了，洗弃牌堆到抽牌堆
+      if (this.discardPile.length === 0) return null;
+      this.drawPile = [...this.discardPile];
+      this.discardPile = [];
+      this.shuffleDrawPile();
+    }
+    return this.drawPile.pop();
+  }
+
+  discardCard(card: any): void {
+    this.discardPile.push(card);
+  }
+}
+
+/**
+ * HandComponent - 手牌组件
+ * 玩家当前持有的手牌
+ */
+export class HandComponent {
+  public static readonly TYPE = 'hand';
+  
+  public cards: any[] = [];
+  public maxHandSize: number = 8; // 手牌上限
+
+  addCard(card: any): boolean {
+    if (this.cards.length >= this.maxHandSize) return false;
+    this.cards.push(card);
+    return true;
+  }
+
+  removeCard(cardId: string): any | null {
+    const index = this.cards.findIndex(c => c.identity?.uniqueId === cardId);
+    if (index > -1) {
+      return this.cards.splice(index, 1)[0];
+    }
+    return null;
+  }
+}
+
+/**
+ * EnergyComponent - 能量组件
+ * 打牌消耗的能量
+ */
+export class EnergyComponent {
+  public static readonly TYPE = 'energy';
+  
+  public current: number = 3;
+  public max: number = 10;
+  public regenPerTurn: number = 2; // 每回合恢复量
+
+  spend(amount: number): boolean {
+    if (this.current >= amount) {
+      this.current -= amount;
+      return true;
+    }
+    return false;
+  }
+
+  regen(): void {
+    this.current = Math.min(this.max, this.current + this.regenPerTurn);
+  }
+}
+
+// ==========================================
+// 任务组件 - Quest Components
+// ==========================================
+
+export type QuestType = '主线' | '日常' | '周常' | '活动';
+export type QuestObjectiveType = '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | '完成任务';
+
+export interface QuestObjective {
+  id: string;
+  type: QuestObjectiveType;
+  target: string; // 目标类型，比如资源类型、卡牌类型等
+  requiredAmount: number;
+  currentAmount: number;
+  completed: boolean;
+}
+
+export interface QuestReward {
+  type: '资源' | '卡牌' | '道具' | '经验' | '金币';
+  target: string;
+  amount: number;
+}
+
+export interface Quest {
+  id: string;
+  type: QuestType;
+  title: string;
+  description: string;
+  objectives: QuestObjective[];
+  rewards: QuestReward[];
+  unlocked: boolean;
+  completed: boolean;
+  claimed: boolean;
+  unlockCondition?: {
+    type: QuestObjectiveType;
+    target: string;
+    amount: number;
+  };
+  dailyReset?: boolean;
+  priority: number;
+}
+
+/**
+ * QuestComponent - 任务组件
+ * 玩家的任务列表和进度
+ */
+export class QuestComponent {
+  public static readonly TYPE = 'quest';
+  
+  public quests: Quest[] = [];
+  public completedQuests: string[] = [];
+  public dailyResetTime: number = 86400000; // 24小时
+  public lastDailyReset: number = Date.now();
+  
+  /**
+   * 添加新任务
+   */
+  addQuest(quest: Quest): boolean {
+    if (this.quests.find(q => q.id === quest.id)) return false;
+    this.quests.push(quest);
+    return true;
+  }
+  
+  /**
+   * 更新任务进度
+   */
+  updateProgress(
+    objectiveType: QuestObjectiveType,
+    target: string,
+    amount: number = 1
+  ): void {
+    this.quests.forEach(quest => {
+      if (!quest.unlocked || quest.completed) return;
+      
+      quest.objectives.forEach(objective => {
+        if (objective.type === objectiveType && 
+            objective.target === target && 
+            !objective.completed) {
+          objective.currentAmount = Math.min(
+            objective.requiredAmount,
+            objective.currentAmount + amount
+          );
+          
+          if (objective.currentAmount >= objective.requiredAmount) {
+            objective.completed = true;
+          }
+          
+          this.checkQuestCompletion(quest);
+        }
+      });
+    });
+  }
+  
+  /**
+   * 检查任务是否完成
+   */
+  private checkQuestCompletion(quest: Quest): boolean {
+    const allCompleted = quest.objectives.every(o => o.completed);
+    if (allCompleted && !quest.completed) {
+      quest.completed = true;
+      this.completedQuests.push(quest.id);
+      console.log(`✅ 任务完成: ${quest.title}`);
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * 领取任务奖励
+   */
+  claimRewards(questId: string): QuestReward[] | false {
+    const quest = this.quests.find(q => q.id === questId);
+    if (!quest || !quest.completed || quest.claimed) return false;
+    
+    quest.claimed = true;
+    return quest.rewards;
+  }
+  
+  /**
+   * 重置日常任务
+   */
+  resetDailyQuests(): void {
+    const now = Date.now();
+    if (now - this.lastDailyReset >= this.dailyResetTime) {
+      this.quests = this.quests.filter(q => q.type !== '日常');
+      this.lastDailyReset = now;
+      console.log('🔄 日常任务已重置');
+    }
+  }
+  
+  /**
+   * 获取可领取奖励的任务
+   */
+  getClaimableQuests(): Quest[] {
+    return this.quests.filter(q => q.completed && !q.claimed);
+  }
+  
+  /**
+   * 获取进行中的任务
+   */
+  getActiveQuests(): Quest[] {
+    return this.quests.filter(q => q.unlocked && !q.completed);
+  }
+}
+
+// ==========================================
 // 世界组件 - World Components
 // ==========================================
 
@@ -500,6 +732,82 @@ export class GameStateComponent {
   }
 }
 
+/**
+ * ComboComponent - 组合技组件
+ * 跟踪激活的组合技和效果
+ */
+export class ComboComponent {
+  public static readonly TYPE = 'combo';
+  
+  public activeCombos: Array<{
+    id: string;
+    name: string;
+    description: string;
+    effect: string;
+    activatedAt: number;
+    duration?: number; // 持续时间，undefined表示永久生效直到条件不满足
+    strength: number;
+    active: boolean;
+  }> = [];
+
+  // 激活组合技
+  activateCombo(
+    id: string,
+    name: string,
+    description: string,
+    effect: string,
+    strength: number,
+    duration?: number
+  ): boolean {
+    const existing = this.activeCombos.find(c => c.id === id);
+    if (existing) {
+      existing.active = true;
+      existing.activatedAt = Date.now();
+      existing.strength = strength;
+      if (duration) existing.duration = duration;
+      return false; // 已存在，更新状态
+    }
+
+    this.activeCombos.push({
+      id, name, description, effect, strength,
+      activatedAt: Date.now(), duration, active: true
+    });
+    return true; // 新激活
+  }
+
+  // 失效组合技
+  deactivateCombo(id: string): boolean {
+    const combo = this.activeCombos.find(c => c.id === id);
+    if (combo) {
+      combo.active = false;
+      return true;
+    }
+    return false;
+  }
+
+  // 检查组合是否激活
+  isComboActive(id: string): boolean {
+    return this.activeCombos.some(c => c.id === id && c.active);
+  }
+
+  // 获取所有激活的组合
+  getActiveCombos() {
+    return this.activeCombos.filter(c => c.active);
+  }
+
+  // 更新组合状态
+  update(dt: number) {
+    this.activeCombos.forEach(combo => {
+      if (combo.duration && combo.active) {
+        combo.duration -= dt;
+        if (combo.duration <= 0) {
+          combo.active = false;
+        }
+      }
+    });
+  }
+}
+
 // ==========================================
 // 组件注册表 - Component Registry
 // ==========================================
@@ -521,7 +829,12 @@ export const COMPONENT_REGISTRY = {
   'combat': CombatComponent,
   'effect': EffectComponent,
   'world': WorldComponent,
-  'gameState': GameStateComponent
+  'gameState': GameStateComponent,
+  'deck': DeckComponent,
+  'hand': HandComponent,
+  'energy': EnergyComponent,
+  'combo': ComboComponent,
+  'quest': QuestComponent
 };
 
 // ==========================================
@@ -590,6 +903,31 @@ export class EntityFactory {
   }
 
   static createPlayerEntity(config: any = {}): any {
+    // 创建初始牌组
+    const initialDeck = new DeckComponent();
+    
+    // 初始卡牌：6张小麦、2张小鸡、1张锄头、1张农舍
+    for (let i = 0; i < 6; i++) {
+      initialDeck.library.push(EntityFactory.createCardEntity('作物', {
+        identity: { name: '小麦', description: '基础作物，种植后生产作物资源' }
+      }));
+    }
+    for (let i = 0; i < 2; i++) {
+      initialDeck.library.push(EntityFactory.createCardEntity('动物', {
+        identity: { name: '小鸡', description: '养殖后生产动物资源' }
+      }));
+    }
+    initialDeck.library.push(EntityFactory.createCardEntity('工具', {
+      identity: { name: '锄头', description: '提升耕作效率' }
+    }));
+    initialDeck.library.push(EntityFactory.createCardEntity('建筑', {
+      identity: { name: '小型农舍', description: '提升资源存储上限' }
+    }));
+    
+    // 初始化抽牌堆
+    initialDeck.drawPile = [...initialDeck.library];
+    initialDeck.shuffleDrawPile();
+    
     const entity = {
       'identity': new IdentityComponent({
         name: '玩家',
@@ -600,7 +938,12 @@ export class EntityFactory {
       'combat': new CombatComponent(config.combat),
       'character': new CharacterComponent(config.character),
       'upgrade': new UpgradeComponent(config.upgrade),
-      'gameState': new GameStateComponent(config.gameState)
+      'gameState': new GameStateComponent(config.gameState),
+      'deck': initialDeck,
+      'hand': new HandComponent(config.hand),
+      'energy': new EnergyComponent(config.energy),
+      'quest': new QuestComponent(config.quest),
+      'combo': new ComboComponent(config.combo)
     };
     
     return entity;

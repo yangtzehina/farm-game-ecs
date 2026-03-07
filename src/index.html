@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏡 农庄卡牌：田园物语</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .title {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .description {
+            font-size: 1.2em;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        
+        .game-area {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            min-height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #gameCanvas {
+            border: 1px solid #ccc;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        .game-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .stat {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-color: #3498db;
+        }
+        
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .feature-description {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🏡 农庄卡牌：田园物语</h1>
+        <p class="description">ECS架构的肉鸽种地游戏 - 浏览器版本</p>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="window.FarmGameApp.start()">🎮 开始游戏</button>
+            <button class="btn btn-primary" onclick="window.FarmGameApp.pause()">⏸️ 暂停游戏</button>
+            <button class="btn btn-danger" onclick="window.FarmGameApp.resetGame()">🔄 重置游戏</button>
+            <button class="btn btn-warning" onclick="window.FarmGameApp.clearCache()">🔄 清除缓存</button>
+        </div>
+        
+        <div class="game-stats">
+            <div class="stat">
+                <div class="stat-value" id="energyCount">3</div>
+                <div class="stat-label">⚡ 能量</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="dayCount">1</div>
+                <div class="stat-label">📅 天数</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="moneyCount">100</div>
+                <div class="stat-label">💰 金币</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="levelCount">1</div>
+                <div class="stat-label">⭐ 等级</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="expCount">0%</div>
+                <div class="stat-label">📊 经验</div>
+            </div>
+        </div>
+
+        <!-- 资源面板 -->
+        <div class="resource-panel" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin: 20px 0; padding: 15px; background: #e8f5e9; border-radius: 10px;">
+            <div class="resource">
+                <span style="font-size: 1.2em;">🌾</span> <span id="wheatCount">0</span> 小麦
+            </div>
+            <div class="resource">
+                <span style="font-size: 1.2em;">🥕</span> <span id="carrotCount">0</span> 胡萝卜
+            </div>
+            <div class="resource">
+                <span style="font-size: 1.2em;">🐔</span> <span id="chickenCount">0</span> 鸡
+            </div>
+            <div class="resource">
+                <span style="font-size: 1.2em;">🥚</span> <span id="eggCount">0</span> 鸡蛋
+            </div>
+            <div class="resource">
+                <span style="font-size: 1.2em;">🥛</span> <span id="milkCount">0</span> 牛奶
+            </div>
+        </div>
+
+        <!-- 组合提示 -->
+        <div id="comboHint" style="margin: 20px 0; padding: 15px; background: #fff3e0; border-radius: 10px; display: none;">
+            <h4 style="margin: 0 0 10px 0;">💡 可合成组合</h4>
+            <div id="comboList" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+        </div>
+
+        <div class="game-area">
+            <canvas id="gameCanvas" width="800" height="450"></canvas>
+        </div>
+
+        <!-- 手牌区域 -->
+        <div id="handArea" style="margin: 20px 0; padding: 20px; background: #e3f2fd; border-radius: 15px; min-height: 120px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <div class="card" draggable="true" data-card-id="wheat" data-cost="1" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid #3498db;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🌾</div>
+                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">小麦种子</div>
+                <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 5px;">种植获得小麦</div>
+                <div style="font-size: 0.8em; color: #f39c12;">⚡ 1</div>
+            </div>
+            <div class="card" draggable="true" data-card-id="carrot" data-cost="1" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid #e67e22;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🥕</div>
+                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">胡萝卜种子</div>
+                <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 5px;">种植获得胡萝卜</div>
+                <div style="font-size: 0.8em; color: #f39c12;">⚡ 1</div>
+            </div>
+            <div class="card" draggable="true" data-card-id="chicken" data-cost="2" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid #f1c40f;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🐔</div>
+                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">小鸡</div>
+                <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 5px;">养殖获得鸡蛋</div>
+                <div style="font-size: 0.8em; color: #f39c12;">⚡ 2</div>
+            </div>
+            <div class="card" draggable="true" data-card-id="cow" data-cost="3" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid #9b59b6;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🐄</div>
+                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">奶牛</div>
+                <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 5px;">养殖获得牛奶</div>
+                <div style="font-size: 0.8em; color: #f39c12;">⚡ 3</div>
+            </div>
+        </div>
+            <div class="stat">
+                <div class="stat-value" id="dayCount">1</div>
+                <div class="stat-label">📅 天数</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="moneyCount">100</div>
+                <div class="stat-label">💰 金币</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="levelCount">1</div>
+                <div class="stat-label">⭐ 等级</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="expCount">0%</div>
+                <div class="stat-label">📊 经验</div>
+            </div>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🎴</div>
+                <div class="feature-title">卡牌系统</div>
+                <div class="feature-description">收集各种卡牌，升级建筑，管理你的农庄</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🏡</div>
+                <div class="feature-title">农庄管理</div>
+                <div class="feature-description">建设设施，种植作物，养殖动物，发展经济</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔄</div>
+                <div class="feature-title">肉鸽模式</div>
+                <div class="feature-description">随机事件，策略选择，无限的游戏可能性</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🏡 农庄卡牌：田园物语 | ECS架构的肉鸽种地游戏</p>
+            <p>Created with ❤️ using Node.js and TypeScript</p>
+            <p>
+                <a href="https://github.com/yangtzehina/farm-game-ecs" target="_blank">GitHub仓库</a> | 
+                <a href="https://github.com/yangtzehina/farm-game-ecs/releases" target="_blank">下载</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🏡 农庄卡牌：田园物语 - 页面加载完成');
+            console.log('ECS架构的肉鸽种地游戏');
+            console.log('项目地址：https://github.com/yangtzehina/farm-game-ecs');
+        });
+    </script>
+    <script src="bundle.js"></script>
+</body>
+</html>
