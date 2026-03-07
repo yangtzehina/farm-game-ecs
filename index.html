@@ -181,11 +181,85 @@
             <button class="btn btn-warning" onclick="window.FarmGameApp.clearCache()">🔄 清除缓存</button>
         </div>
         
-        <div class="game-area">
-            <canvas id="gameCanvas" width="800" height="600"></canvas>
-        </div>
-        
         <div class="game-stats">
+            <div class="stat">
+                <div class="stat-value" id="energyCount">3</div>
+                <div class="stat-label">⚡ 能量</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="dayCount">1</div>
+                <div class="stat-label">📅 天数</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="moneyCount">100</div>
+                <div class="stat-label">💰 金币</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="levelCount">1</div>
+                <div class="stat-label">⭐ 等级</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="expCount">0%</div>
+                <div class="stat-label">📊 经验</div>
+            </div>
+        </div>
+
+        <!-- 资源面板 -->
+        <div class="resource-panel" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin: 20px 0; padding: 15px; background: #e8f5e9; border-radius: 10px;">
+            <div class="resource">
+                <span style="font-size: 1.2em;">🌾</span> <span id="wheatCount">0</span> 小麦
+            </div>
+            <div class="resource">
+                <span style="font-size: 1.2em;">🥕</span> <span id="carrotCount">0</span> 胡萝卜
+            </div>
+            <div class="resource">
+                <span style="font-size: 1.2em;">🐔</span> <span id="chickenCount">0</span> 鸡
+            </div>
+            <div class="resource">
+                <span style="font-size: 1.2em;">🥚</span> <span id="eggCount">0</span> 鸡蛋
+            </div>
+            <div class="resource">
+                <span style="font-size: 1.2em;">🥛</span> <span id="milkCount">0</span> 牛奶
+            </div>
+        </div>
+
+        <!-- 组合提示 -->
+        <div id="comboHint" style="margin: 20px 0; padding: 15px; background: #fff3e0; border-radius: 10px; display: none;">
+            <h4 style="margin: 0 0 10px 0;">💡 可合成组合</h4>
+            <div id="comboList" style="display: flex; gap: 10px; flex-wrap: wrap;"></div>
+        </div>
+
+        <div class="game-area">
+            <canvas id="gameCanvas" width="800" height="450"></canvas>
+        </div>
+
+        <!-- 手牌区域 -->
+        <div id="handArea" style="margin: 20px 0; padding: 20px; background: #e3f2fd; border-radius: 15px; min-height: 120px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+            <div class="card" draggable="true" data-card-id="wheat" data-cost="1" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid #3498db;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🌾</div>
+                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">小麦种子</div>
+                <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 5px;">种植获得小麦</div>
+                <div style="font-size: 0.8em; color: #f39c12;">⚡ 1</div>
+            </div>
+            <div class="card" draggable="true" data-card-id="carrot" data-cost="1" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid #e67e22;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🥕</div>
+                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">胡萝卜种子</div>
+                <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 5px;">种植获得胡萝卜</div>
+                <div style="font-size: 0.8em; color: #f39c12;">⚡ 1</div>
+            </div>
+            <div class="card" draggable="true" data-card-id="chicken" data-cost="2" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid #f1c40f;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🐔</div>
+                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">小鸡</div>
+                <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 5px;">养殖获得鸡蛋</div>
+                <div style="font-size: 0.8em; color: #f39c12;">⚡ 2</div>
+            </div>
+            <div class="card" draggable="true" data-card-id="cow" data-cost="3" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid #9b59b6;">
+                <div style="font-size: 2em; margin-bottom: 5px;">🐄</div>
+                <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">奶牛</div>
+                <div style="font-size: 0.8em; color: #7f8c8d; margin-bottom: 5px;">养殖获得牛奶</div>
+                <div style="font-size: 0.8em; color: #f39c12;">⚡ 3</div>
+            </div>
+        </div>
             <div class="stat">
                 <div class="stat-value" id="dayCount">1</div>
                 <div class="stat-label">📅 天数</div>
@@ -240,6 +314,6 @@
             console.log('项目地址：https://github.com/yangtzehina/farm-game-ecs');
         });
     </script>
-    <script src="https://yangtzehina.github.io/farm-game-ecs/bundle.js?v=2"></script>
+    <script src="bundle.js"></script>
 </body>
 </html>
