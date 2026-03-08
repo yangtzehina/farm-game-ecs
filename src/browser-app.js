@@ -2,12 +2,14 @@
  * 🏡 农庄卡牌：田园物语 - 包含绘图功能的浏览器应用入口
  */
 
-console.log('🏡 农庄卡牌：田园物语 - 浏览器应用入口加载');
+// console.log('🏡 农庄卡牌：田园物语 - 浏览器应用入口加载');
 
 // FarmGameEngine 类
 class FarmGameEngine {
   constructor() {
-    console.log('🏡 FarmGameEngine 构造函数');
+    // 调试模式
+    this.debug = false;
+    this.log('🏡 FarmGameEngine 构造函数');
     this.gameRunning = false;
     this.canvas = null;
     this.ctx = null;
@@ -47,8 +49,14 @@ class FarmGameEngine {
     ];
   }
 
+  log(...args) {
+    if (this.debug) {
+      console.log(...args);
+    }
+  }
+
   initialize() {
-    console.log('🏡 FarmGameEngine 初始化');
+    this.log('🏡 FarmGameEngine 初始化');
     this.setupCanvas();
     this.setupDragAndDrop();
     this.loadGameState();
@@ -74,7 +82,7 @@ class FarmGameEngine {
       return;
     }
 
-    console.log('🎨 Canvas 初始化完成');
+    this.log('🎨 Canvas 初始化完成');
   }
 
   setupDragAndDrop() {
@@ -117,7 +125,7 @@ class FarmGameEngine {
       }
     });
 
-    console.log('🎴 拖放系统初始化完成');
+    this.log('🎴 拖放系统初始化完成');
   }
 
   playCard(card, x, y) {
@@ -411,11 +419,11 @@ class FarmGameEngine {
 
   start() {
     if (this.gameRunning) {
-      console.log('🎮 游戏已在运行');
+      this.log('🎮 游戏已在运行');
       return;
     }
 
-    console.log('🎮 游戏开始');
+    this.log('🎮 游戏开始');
     this.gameRunning = true;
     
     // 每天恢复能量
@@ -458,19 +466,19 @@ class FarmGameEngine {
 
   pause() {
     if (!this.gameRunning) {
-      console.log('⏸️ 游戏已暂停');
+      this.log('⏸️ 游戏已暂停');
       return;
     }
 
     this.gameRunning = false;
-    console.log('⏸️ 游戏暂停');
+    this.log('⏸️ 游戏暂停');
     this.drawGameScreen();
     this.saveGameState();
   }
 
   resetGame() {
     if (confirm('确定要重置游戏吗？所有进度将会丢失！')) {
-      console.log('🔄 游戏重置');
+      this.log('🔄 游戏重置');
       this.gameRunning = false;
       this.gameState = {
         energy: 3,
@@ -504,7 +512,7 @@ class FarmGameEngine {
 
   clearCache() {
     if (confirm('确定要清除缓存吗？会删除本地存档！')) {
-      console.log('🔄 清除缓存');
+      this.log('🔄 清除缓存');
       localStorage.removeItem('farmGameSave');
       this.showMessage('✅ 缓存已清除', '#27ae60');
     }
@@ -513,7 +521,7 @@ class FarmGameEngine {
   saveGameState() {
     try {
       localStorage.setItem('farmGameSave', JSON.stringify(this.gameState));
-      console.log('💾 游戏已保存');
+      this.log('💾 游戏已保存');
     } catch (e) {
       console.error('❌ 保存游戏失败', e);
     }
@@ -524,7 +532,7 @@ class FarmGameEngine {
       const saved = localStorage.getItem('farmGameSave');
       if (saved) {
         this.gameState = JSON.parse(saved);
-        console.log('📂 游戏已加载');
+        this.log('📂 游戏已加载');
         this.showMessage('✅ 成功加载存档', '#27ae60');
       }
     } catch (e) {
@@ -549,6 +557,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const engine = new FarmGameEngine();
   engine.initialize();
   window.FarmGameApp = engine;
-  console.log('✅ 游戏引擎初始化完成');
-  console.log('🚀 window.FarmGameApp:', window.FarmGameApp);
+  // engine.log('✅ 游戏引擎初始化完成');
+  // engine.log('🚀 window.FarmGameApp:', window.FarmGameApp);
 });
