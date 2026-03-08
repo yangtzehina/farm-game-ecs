@@ -209,13 +209,33 @@ class FarmGameEngine {
 
     if (availableCombos.length > 0) {
       comboHint.style.display = 'block';
-      comboList.innerHTML = availableCombos.map(combo => `
-        <div style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <div style="font-size: 1.2em;">${combo.icon} ${combo.name}</div>
-          <div style="font-size: 0.8em; color: #7f8c8d;">${combo.desc}</div>
-          <button onclick="window.FarmGameApp.makeCombo('${combo.result}')" style="margin-top: 5px; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;">合成</button>
-        </div>
-      `).join('');
+      comboList.innerHTML = '';
+      availableCombos.forEach(combo => {
+        const card = document.createElement('div');
+        card.style.cssText = 'background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);';
+
+        const title = document.createElement('div');
+        title.style.fontSize = '1.2em';
+        title.textContent = `${combo.icon} ${combo.name}`;
+        card.appendChild(title);
+
+        const desc = document.createElement('div');
+        desc.style.cssText = 'font-size: 0.8em; color: #7f8c8d;';
+        desc.textContent = combo.desc;
+        card.appendChild(desc);
+
+        const btn = document.createElement('button');
+        btn.style.cssText = 'margin-top: 5px; padding: 5px 10px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer;';
+        btn.textContent = '合成';
+        btn.onclick = () => {
+          if (window.FarmGameApp) {
+            window.FarmGameApp.makeCombo(combo.result);
+          }
+        };
+        card.appendChild(btn);
+
+        comboList.appendChild(card);
+      });
     } else {
       comboHint.style.display = 'none';
     }
