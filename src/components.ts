@@ -124,7 +124,7 @@ export class ResourceComponent {
   };
 
   addResource(type: string, amount: number): boolean {
-    if (!this.resources[type]) return false;
+    if (this.resources[type] === undefined) return false;
     if (this.resources[type] + amount > this.maxStorage[type]) return false;
     
     this.resources[type] += amount;
@@ -132,7 +132,7 @@ export class ResourceComponent {
   }
 
   removeResource(type: string, amount: number): boolean {
-    if (!this.resources[type]) return false;
+    if (this.resources[type] === undefined) return false;
     if (this.resources[type] - amount < 0) return false;
     
     this.resources[type] -= amount;
@@ -523,6 +523,7 @@ export class EnergyComponent {
   public regenPerTurn: number = 2; // 每回合恢复量
 
   spend(amount: number): boolean {
+    if (amount < 0) return false;
     if (this.current >= amount) {
       this.current -= amount;
       return true;

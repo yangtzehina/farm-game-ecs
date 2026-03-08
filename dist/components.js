@@ -415,6 +415,7 @@ export class EnergyComponent {
         this.regenPerTurn = 2; // 每回合恢复量
     }
     spend(amount) {
+        if (amount < 0) return false;
         if (this.current >= amount) {
             this.current -= amount;
             return true;

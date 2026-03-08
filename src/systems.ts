@@ -819,15 +819,17 @@ export class ComboSystem extends BaseSystem {
 
   update(entities: any[], dt: number): void {
     const filteredEntities = this.filterEntities(entities);
-    
+    if (filteredEntities.length === 0) return;
+
+    // 获取所有已打出的卡牌（场上的实体）
+    // 将过滤操作移出循环，避免对每个玩家重复执行
+    const fieldCards = entities.filter(e => e['card'] && e['position']);
+
     filteredEntities.forEach(player => {
       const comboComp = player['combo'] as ComboComponent;
       
       // 更新组合持续时间
       comboComp.update(dt);
-      
-      // 获取所有已打出的卡牌（场上的实体）
-      const fieldCards = entities.filter(e => e['card'] && e['position']);
       
       // 检查所有组合条件
       this.COMBO_CONFIG.forEach(comboConfig => {
