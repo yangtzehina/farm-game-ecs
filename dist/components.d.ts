@@ -290,8 +290,64 @@ export declare class EnergyComponent {
     spend(amount: number): boolean;
     regen(): void;
 }
-export type QuestType = '主线' | '日常' | '周常' | '活动';
-export type QuestObjectiveType = '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | '完成任务';
+export type QuestType = '主线' | '日常' | '周常' | '活动' | '阶段';
+export type QuestObjectiveType = '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | '完成任务' | '打出卡牌' | '弃置卡牌' | '激活组合' | '获取经验' | '存活回合' | '使用工具' | '获得buff' | '出售资源' | '等级提升';
+/**
+ * DailyQuestComponent - 短期日常任务组件
+ * 每回合随机生成3个短期任务
+ */
+export declare class DailyQuestComponent {
+    static readonly TYPE = "dailyQuest";
+    activeQuests: Quest[];
+    availableQuestPool: Omit<Quest, 'unlocked' | 'completed' | 'claimed'>[];
+    lastRefreshTurn: number;
+    /**
+     * 刷新日常任务，随机抽取3个不重复的任务
+     */
+    refreshQuests(currentTurn: number, questPool: Omit<Quest, 'unlocked' | 'completed' | 'claimed'>[], count?: number): void;
+    /**
+     * 更新日常任务进度
+     */
+    updateProgress(objectiveType: QuestObjectiveType, target: string, amount?: number): void;
+    /**
+     * 检查任务是否完成
+     */
+    private checkQuestCompletion;
+    /**
+     * 获取可领取奖励的日常任务
+     */
+    getClaimableQuests(): Quest[];
+}
+/**
+ * StageQuestComponent - 中期阶段任务组件
+ * 局内4个阶段主线任务
+ */
+export declare class StageQuestComponent {
+    static readonly TYPE = "stageQuest";
+    stageQuests: Quest[];
+    currentStage: number;
+    maxStages: number;
+    /**
+     * 初始化阶段任务
+     */
+    initStageQuests(stageQuestConfigs: Omit<Quest, 'unlocked' | 'completed' | 'claimed'>[]): void;
+    /**
+     * 更新阶段任务进度
+     */
+    updateProgress(objectiveType: QuestObjectiveType, target: string, amount?: number): void;
+    /**
+     * 检查任务是否完成，完成后解锁下一阶段
+     */
+    private checkQuestCompletion;
+    /**
+     * 获取可领取奖励的阶段任务
+     */
+    getClaimableQuests(): Quest[];
+    /**
+     * 获取当前进行中的阶段任务
+     */
+    getCurrentActiveQuest(): Quest | undefined;
+}
 export interface QuestObjective {
     id: string;
     type: QuestObjectiveType;
@@ -450,6 +506,8 @@ export declare const COMPONENT_REGISTRY: {
     energy: typeof EnergyComponent;
     combo: typeof ComboComponent;
     quest: typeof QuestComponent;
+    dailyQuest: typeof DailyQuestComponent;
+    stageQuest: typeof StageQuestComponent;
 };
 export declare class EntityFactory {
     static createCardEntity(type: '作物' | '动物' | '工具' | '建筑' | '人物', config?: any): any;
@@ -460,4 +518,45 @@ export declare function createComponent(type: string, config?: any): any;
 export declare function getComponent(entity: any, type: string): any;
 export declare function addComponent(entity: any, type: string, config?: any): boolean;
 export declare function removeComponent(entity: any, type: string): boolean;
+import { BuildingType } from './configs/buildings';
+/**
+ * FarmBuildingComponent - 农场建筑组件
+ * 每个农场建筑实体包含
+ */
+export declare class FarmBuildingComponent {
+    static readonly TYPE = "farm_building";
+    type: BuildingType;
+    level: number;
+    isUnlocked: boolean;
+    position: Position;
+    isUpgrading: boolean;
+    upgradeStartTime: number;
+    upgradeDuration: number;
+    constructor(type: BuildingType, position: Position, isUnlocked?: boolean);
+}
+/**
+ * BuildingBuffComponent - 全局建筑Buff组件
+ * 单实体组件，存储所有建筑提供的总Buff效果
+ */
+export declare class BuildingBuffComponent {
+    static readonly TYPE = "building_buff";
+    cropYield: number;
+    growthSpeed: number;
+    waterSupply: number;
+    animalYield: number;
+    animalSpeed: number;
+    processingEfficiency: number;
+    processedValue: number;
+    storageCapacity: number;
+    resourceTax: number;
+    sellPrice: number;
+    buyDiscount: number;
+    constructor();
+    reset(): void;
+    addBuff(buff: Record<string, number>): void;
+}
+export declare class FarmBuildingFactory {
+    static createFarmBuildingEntity(type: BuildingType, position: Position, isUnlocked?: boolean): any;
+    static createBuildingBuffEntity(): any;
+}
 export declare function hasComponent(entity: any, type: string): boolean;

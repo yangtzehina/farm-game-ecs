@@ -30,8 +30,14 @@ import {
   QuestComponent,
   Quest,
   QuestObjectiveType,
-  QuestReward
+  QuestReward,
+  FarmBuildingComponent,
+  BuildingBuffComponent,
+  DailyQuestComponent,
+  StageQuestComponent
 } from './components';
+import { BuildingType, BUILDING_CONFIGS, getBuildingLevelConfig, getBuildingUpgradeCost } from './configs/buildings';
+import { DAILY_QUEST_POOL, STAGE_QUESTS } from './configs/quests';
 
 // ==========================================
 // 系统基类 - System Base Class
@@ -1043,7 +1049,7 @@ export class QuestSystem extends BaseSystem {
   }
 
   getRequiredComponents(): string[] {
-    return ['quest', 'resource'];
+    return ['quest', 'resource', 'dailyQuest', 'stageQuest'];
   }
 
   filterEntities(entities: any[]): any[] {
@@ -1057,15 +1063,28 @@ export class QuestSystem extends BaseSystem {
     
     filteredEntities.forEach(entity => {
       const questComp = entity['quest'] as QuestComponent;
+      const dailyQuestComp = entity['dailyQuest'] as DailyQuestComponent;
+      const stageQuestComp = entity['stageQuest'] as StageQuestComponent;
+      const worldComp = entity['world'] as WorldComponent;
       
-      // 重置日常任务
+      // 初始化阶段任务（如果还没初始化）
+      if (stageQuestComp.stageQuests.length === 0) {
+        stageQuestComp.initStageQuests(STAGE_QUESTS);
+      }
+      
+      // 每回合刷新日常任务（当前天数作为回合数）
+      if (worldComp) {
+        dailyQuestComp.refreshQuests(worldComp.currentDay, DAILY_QUEST_POOL, 3);
+      }
+      
+      // 重置原有日常任务
       questComp.resetDailyQuests();
       
-      // 检查任务解锁条件
+      // 检查原有任务解锁条件
       this.checkQuestUnlocks(entity, questComp);
       
-      // 自动发放已完成任务的奖励
-      this.autoClaimRewards(entity, questComp);
+      // 自动发放所有已完成任务的奖励
+      this.autoClaimRewards(entity, questComp, dailyQuestComp, stageQuestComp);
     });
   }
 
@@ -1106,15 +1125,31 @@ export class QuestSystem extends BaseSystem {
   /**
    * 自动发放已完成任务的奖励
    */
-  private autoClaimRewards(entity: any, questComp: QuestComponent): void {
+  private autoClaimRewards(entity: any, questComp: QuestComponent, dailyQuestComp: DailyQuestComponent, stageQuestComp: StageQuestComponent): void {
+    // 原有任务奖励
     const claimable = questComp.getClaimableQuests();
-    
     claimable.forEach(quest => {
       const rewards = questComp.claimRewards(quest.id);
       if (rewards) {
         this.giveRewards(entity, rewards);
         console.log(`🎁 领取任务奖励: ${quest.title}`);
       }
+    });
+    
+    // 日常任务奖励
+    const dailyClaimable = dailyQuestComp.getClaimableQuests();
+    dailyClaimable.forEach(quest => {
+      quest.claimed = true;
+      this.giveRewards(entity, quest.rewards);
+      console.log(`🎁 领取日常任务奖励: ${quest.title}`);
+    });
+    
+    // 阶段任务奖励
+    const stageClaimable = stageQuestComp.getClaimableQuests();
+    stageClaimable.forEach(quest => {
+      quest.claimed = true;
+      this.giveRewards(entity, quest.rewards);
+      console.log(`🎁 领取阶段任务奖励: ${quest.title}`);
     });
   }
 
@@ -1148,6 +1183,43 @@ export class QuestSystem extends BaseSystem {
             console.log(`   获得卡牌: ${reward.target}`);
           }
           break;
+        case '能量':
+          if (entity['energy']) {
+            entity['energy'].current = Math.min(entity['energy'].max, entity['energy'].current + reward.amount);
+            console.log(`   获得 ${reward.amount} 点能量`);
+          }
+          break;
+        case '抽卡':
+          if (entity['deck'] && entity['hand']) {
+            for (let i = 0; i < reward.amount; i++) {
+              const card = entity['deck'].drawCard();
+              if (card) {
+                entity['hand'].addCard(card);
+                console.log(`   抽卡获得: ${card.identity.name}`);
+              }
+            }
+          }
+          break;
+        case 'buff':
+          if (entity['effect']) {
+            entity['effect'].addEffect(reward.target, 'buff', 30000, 0.2, 'quest_reward');
+            console.log(`   获得buff: ${reward.target}，持续30秒`);
+          }
+          break;
+        case '能量上限提升':
+          if (entity['energy']) {
+            entity['energy'].max += reward.amount;
+            console.log(`   能量上限提升 ${reward.amount} 点，当前上限: ${entity['energy'].max}`);
+          }
+          break;
+        case '解锁卡牌池':
+          // TODO: 实现卡牌池解锁逻辑
+          console.log(`   解锁卡牌池: ${reward.target}`);
+          break;
+        case '解锁新玩法':
+          // TODO: 实现新玩法解锁逻辑
+          console.log(`   解锁新玩法: ${reward.target}`);
+          break;
       }
     });
   }
@@ -1165,6 +1237,18 @@ export class QuestSystem extends BaseSystem {
     
     const questComp = entity['quest'] as QuestComponent;
     questComp.updateProgress(objectiveType, target, amount);
+    
+    // 更新日常任务进度
+    if (entity['dailyQuest']) {
+      const dailyQuestComp = entity['dailyQuest'] as DailyQuestComponent;
+      dailyQuestComp.updateProgress(objectiveType, target, amount);
+    }
+    
+    // 更新阶段任务进度
+    if (entity['stageQuest']) {
+      const stageQuestComp = entity['stageQuest'] as StageQuestComponent;
+      stageQuestComp.updateProgress(objectiveType, target, amount);
+    }
   }
 
   /**
@@ -1264,6 +1348,132 @@ export class QuestSystem extends BaseSystem {
 }
 
 // ==========================================
+// 农场建筑系统 - Farm Building System
+// ==========================================
+export class BuildingSystem extends BaseSystem {
+  constructor() {
+    super('农场建筑', 70);
+    this.updateInterval = 1000;
+  }
+
+  getRequiredComponents(): string[] {
+    return ['farm_building'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const buildings = this.filterEntities(entities);
+    const buffEntity = entities.find(e => e['building_buff']);
+    
+    if (!buffEntity) return;
+    const buffComp = buffEntity['building_buff'] as BuildingBuffComponent;
+    
+    // 重置所有Buff
+    buffComp.reset();
+
+    buildings.forEach(building => {
+      const farmBuildingComp = building['farm_building'] as FarmBuildingComponent;
+      
+      if (!farmBuildingComp.isUnlocked) return;
+
+      // 处理升级进度
+      if (farmBuildingComp.isUpgrading) {
+        const elapsed = Date.now() - farmBuildingComp.upgradeStartTime;
+        if (elapsed >= farmBuildingComp.upgradeDuration) {
+          // 升级完成
+          farmBuildingComp.level += 1;
+          farmBuildingComp.isUpgrading = false;
+          farmBuildingComp.upgradeStartTime = 0;
+          farmBuildingComp.upgradeDuration = 0;
+          
+          // 更新建筑描述
+          const levelConfig = getBuildingLevelConfig(farmBuildingComp.type, farmBuildingComp.level);
+          if (levelConfig && building['identity']) {
+            building['identity'].description = levelConfig.description;
+            building['identity'].level = farmBuildingComp.level;
+          }
+          
+          console.log(`✅ 建筑升级完成: ${BUILDING_CONFIGS[farmBuildingComp.type].name} 已升到Lv${farmBuildingComp.level}`);
+        }
+      }
+
+      // 叠加当前等级的Buff
+      const levelConfig = getBuildingLevelConfig(farmBuildingComp.type, farmBuildingComp.level);
+      if (levelConfig) {
+        buffComp.addBuff(levelConfig.buff);
+      }
+    });
+  }
+
+  /**
+   * 升级建筑
+   * @param building 建筑实体
+   * @param playerResource 玩家资源组件
+   * @returns 是否成功开始升级
+   */
+  upgradeBuilding(building: any, playerResource: ResourceComponent): boolean {
+    const farmBuildingComp = building['farm_building'] as FarmBuildingComponent;
+    
+    // 检查是否已达最大等级
+    if (farmBuildingComp.level >= BUILDING_CONFIGS[farmBuildingComp.type].maxLevel) {
+      console.log(`❌ 建筑已达最大等级: ${BUILDING_CONFIGS[farmBuildingComp.type].name}`);
+      return false;
+    }
+
+    // 检查是否正在升级
+    if (farmBuildingComp.isUpgrading) {
+      console.log(`❌ 建筑正在升级中: ${BUILDING_CONFIGS[farmBuildingComp.type].name}`);
+      return false;
+    }
+
+    // 检查资源是否足够
+    const upgradeCost = getBuildingUpgradeCost(farmBuildingComp.type, farmBuildingComp.level);
+    if (!upgradeCost) return false;
+
+    const hasEnoughResources = Object.entries(upgradeCost).every(([type, cost]) => {
+      return playerResource.resources[type] >= cost;
+    });
+
+    if (!hasEnoughResources) {
+      console.log(`❌ 资源不足，无法升级: ${BUILDING_CONFIGS[farmBuildingComp.type].name}`);
+      return false;
+    }
+
+    // 扣除资源
+    Object.entries(upgradeCost).forEach(([type, cost]) => {
+      playerResource.removeResource(type, cost);
+    });
+
+    // 开始升级
+    farmBuildingComp.isUpgrading = true;
+    farmBuildingComp.upgradeStartTime = Date.now();
+    farmBuildingComp.upgradeDuration = 3000; // 升级耗时3秒，可配置
+
+    console.log(`⏳ 开始升级建筑: ${BUILDING_CONFIGS[farmBuildingComp.type].name} Lv${farmBuildingComp.level} → Lv${farmBuildingComp.level + 1}`);
+    return true;
+  }
+
+  /**
+   * 解锁建筑
+   * @param building 建筑实体
+   * @returns 是否成功解锁
+   */
+  unlockBuilding(building: any): boolean {
+    const farmBuildingComp = building['farm_building'] as FarmBuildingComponent;
+    if (farmBuildingComp.isUnlocked) return false;
+    
+    farmBuildingComp.isUnlocked = true;
+    console.log(`🔓 建筑已解锁: ${BUILDING_CONFIGS[farmBuildingComp.type].name}`);
+    return true;
+  }
+}
+
+// ==========================================
 // 默认系统配置
 // ==========================================
 
@@ -1281,7 +1491,8 @@ export function createDefaultSystems(): SystemManager {
     .registerSystem(new ComboSystem())
     .registerSystem(new WorldSystem())
     .registerSystem(new GameStateSystem())
-    .registerSystem(new QuestSystem());
+    .registerSystem(new QuestSystem())
+    .registerSystem(new BuildingSystem());
 
   return systemManager;
 }

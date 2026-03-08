@@ -427,6 +427,149 @@ export class EnergyComponent {
 }
 EnergyComponent.TYPE = 'energy';
 /**
+ * DailyQuestComponent - 短期日常任务组件
+ * 每回合随机生成3个短期任务
+ */
+export class DailyQuestComponent {
+    constructor() {
+        this.activeQuests = [];
+        this.availableQuestPool = [];
+        this.lastRefreshTurn = 0;
+    }
+    /**
+     * 刷新日常任务，随机抽取3个不重复的任务
+     */
+    refreshQuests(currentTurn, questPool, count = 3) {
+        if (currentTurn === this.lastRefreshTurn)
+            return;
+        // 洗牌算法随机抽取不重复的任务
+        const shuffled = [...questPool].sort(() => Math.random() - 0.5);
+        this.activeQuests = shuffled.slice(0, count).map(q => ({
+            ...q,
+            unlocked: true,
+            completed: false,
+            claimed: false
+        }));
+        this.lastRefreshTurn = currentTurn;
+        console.log(`🔄 本回合日常任务已刷新，共${this.activeQuests.length}个任务`);
+    }
+    /**
+     * 更新日常任务进度
+     */
+    updateProgress(objectiveType, target, amount = 1) {
+        this.activeQuests.forEach(quest => {
+            if (!quest.unlocked || quest.completed)
+                return;
+            quest.objectives.forEach(objective => {
+                if (objective.type === objectiveType &&
+                    (objective.target === target || objective.target === '任意') &&
+                    !objective.completed) {
+                    objective.currentAmount = Math.min(objective.requiredAmount, objective.currentAmount + amount);
+                    if (objective.currentAmount >= objective.requiredAmount) {
+                        objective.completed = true;
+                    }
+                    this.checkQuestCompletion(quest);
+                }
+            });
+        });
+    }
+    /**
+     * 检查任务是否完成
+     */
+    checkQuestCompletion(quest) {
+        const allCompleted = quest.objectives.every(o => o.completed);
+        if (allCompleted && !quest.completed) {
+            quest.completed = true;
+            console.log(`✅ 日常任务完成: ${quest.title}`);
+            return true;
+        }
+        return false;
+    }
+    /**
+     * 获取可领取奖励的日常任务
+     */
+    getClaimableQuests() {
+        return this.activeQuests.filter(q => q.completed && !q.claimed);
+    }
+}
+DailyQuestComponent.TYPE = 'dailyQuest';
+/**
+ * StageQuestComponent - 中期阶段任务组件
+ * 局内4个阶段主线任务
+ */
+export class StageQuestComponent {
+    constructor() {
+        this.stageQuests = [];
+        this.currentStage = 0;
+        this.maxStages = 4;
+    }
+    /**
+     * 初始化阶段任务
+     */
+    initStageQuests(stageQuestConfigs) {
+        this.stageQuests = stageQuestConfigs.map((q, index) => ({
+            ...q,
+            unlocked: index === 0, // 第一个任务默认解锁
+            completed: false,
+            claimed: false
+        }));
+        this.currentStage = 1;
+        console.log('📖 阶段任务已初始化，当前阶段：1');
+    }
+    /**
+     * 更新阶段任务进度
+     */
+    updateProgress(objectiveType, target, amount = 1) {
+        this.stageQuests.forEach(quest => {
+            if (!quest.unlocked || quest.completed)
+                return;
+            quest.objectives.forEach(objective => {
+                if (objective.type === objectiveType &&
+                    (objective.target === target || objective.target === '任意') &&
+                    !objective.completed) {
+                    objective.currentAmount = Math.min(objective.requiredAmount, objective.currentAmount + amount);
+                    if (objective.currentAmount >= objective.requiredAmount) {
+                        objective.completed = true;
+                    }
+                    this.checkQuestCompletion(quest);
+                }
+            });
+        });
+    }
+    /**
+     * 检查任务是否完成，完成后解锁下一阶段
+     */
+    checkQuestCompletion(quest) {
+        const allCompleted = quest.objectives.every(o => o.completed);
+        if (allCompleted && !quest.completed) {
+            quest.completed = true;
+            console.log(`✅ 阶段任务完成: ${quest.title}`);
+            // 解锁下一阶段任务
+            const currentIndex = this.stageQuests.findIndex(q => q.id === quest.id);
+            if (currentIndex < this.stageQuests.length - 1) {
+                this.currentStage++;
+                this.stageQuests[currentIndex + 1].unlocked = true;
+                console.log(`🔓 下一阶段任务已解锁：${this.stageQuests[currentIndex + 1].title}，当前阶段：${this.currentStage}`);
+            }
+            return true;
+        }
+        return false;
+    }
+    /**
+     * 获取可领取奖励的阶段任务
+     */
+    getClaimableQuests() {
+        return this.stageQuests.filter(q => q.completed && !q.claimed);
+    }
+    /**
+     * 获取当前进行中的阶段任务
+     */
+    getCurrentActiveQuest() {
+        return this.stageQuests.find(q => q.unlocked && !q.completed);
+    }
+}
+StageQuestComponent.TYPE = 'stageQuest';
+/**
  * QuestComponent - 任务组件
  * 玩家的任务列表和进度
  */
@@ -637,7 +780,9 @@ export const COMPONENT_REGISTRY = {
     'hand': HandComponent,
     'energy': EnergyComponent,
     'combo': ComboComponent,
-    'quest': QuestComponent
+    'quest': QuestComponent,
+    'dailyQuest': DailyQuestComponent,
+    'stageQuest': StageQuestComponent
 };
 // ==========================================
 // 实体工厂 - Entity Factory
@@ -724,6 +869,8 @@ export class EntityFactory {
             'hand': new HandComponent(config.hand),
             'energy': new EnergyComponent(config.energy),
             'quest': new QuestComponent(config.quest),
+            'dailyQuest': new DailyQuestComponent(config.dailyQuest),
+            'stageQuest': new StageQuestComponent(config.stageQuest),
             'combo': new ComboComponent(config.combo)
         };
         return entity;
@@ -769,6 +916,89 @@ export function removeComponent(entity, type) {
         return false;
     delete entity[type];
     return true;
+}
+/**
+ * FarmBuildingComponent - 农场建筑组件
+ * 每个农场建筑实体包含
+ */
+export class FarmBuildingComponent {
+    constructor(type, position, isUnlocked = false) {
+        this.level = 1;
+        this.isUnlocked = false;
+        this.isUpgrading = false;
+        this.upgradeStartTime = 0;
+        this.upgradeDuration = 0;
+        this.type = type;
+        this.position = position;
+        this.isUnlocked = isUnlocked;
+    }
+}
+FarmBuildingComponent.TYPE = 'farm_building';
+/**
+ * BuildingBuffComponent - 全局建筑Buff组件
+ * 单实体组件，存储所有建筑提供的总Buff效果
+ */
+export class BuildingBuffComponent {
+    constructor() {
+        this.cropYield = 0;
+        this.growthSpeed = 0;
+        this.waterSupply = 0;
+        this.animalYield = 0;
+        this.animalSpeed = 0;
+        this.processingEfficiency = 0;
+        this.processedValue = 0;
+        this.storageCapacity = 0;
+        this.resourceTax = 0;
+        this.sellPrice = 0;
+        this.buyDiscount = 0;
+    }
+    // 重置所有Buff
+    reset() {
+        Object.keys(this).forEach(key => {
+            if (typeof this[key] === 'number') {
+                this[key] = 0;
+            }
+        });
+    }
+    // 叠加Buff
+    addBuff(buff) {
+        Object.entries(buff).forEach(([key, value]) => {
+            if (key in this && typeof this[key] === 'number') {
+                this[key] += value;
+            }
+        });
+    }
+}
+BuildingBuffComponent.TYPE = 'building_buff';
+// 更新组件注册表
+COMPONENT_REGISTRY['farm_building'] = FarmBuildingComponent;
+COMPONENT_REGISTRY['building_buff'] = BuildingBuffComponent;
+// 扩展实体工厂
+export class FarmBuildingFactory {
+    static createFarmBuildingEntity(type, position, isUnlocked = false) {
+        const config = BUILDING_CONFIGS[type];
+        const entity = {};
+        entity['identity'] = new IdentityComponent({
+            name: config.name,
+            description: config.levels[0].description,
+            entityType: 'farm_building',
+            level: 1
+        });
+        entity['position'] = new PositionComponent(position.x, position.y);
+        entity['dimensions'] = new DimensionsComponent(2, 2);
+        entity['farm_building'] = new FarmBuildingComponent(type, position, isUnlocked);
+        entity['resource'] = new ResourceComponent();
+        return entity;
+    }
+    static createBuildingBuffEntity() {
+        const entity = {};
+        entity['identity'] = new IdentityComponent({
+            name: '全局建筑Buff',
+            entityType: 'building_buff'
+        });
+        entity['building_buff'] = new BuildingBuffComponent();
+        return entity;
+    }
 }
 export function hasComponent(entity, type) {
     return !!entity[type];
