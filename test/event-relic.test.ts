@@ -50,14 +50,15 @@ describe('随机事件系统测试', () => {
       gameState: new GameStateComponent(),
       resource: { resources: { 金币: 100, 作物: 50, 木材: 100, 石头: 100 } },
       relics: [],
-      storage: { fruits: [] },
+      storage: { fruits: [], crops: [] },
       crops: [],
       items: [],
       fields: [],
       animals: [],
       buildings: [],
       buffs: [],
-      debuffs: []
+      debuffs: [],
+      resources: { wood: 10, stone: 10 }
     };
     systemManager.addEntity(player);
 
