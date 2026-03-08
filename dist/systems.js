@@ -5,6 +5,7 @@
  * 按照Data-Oriented Design原则设计
  * 重点在于数据处理和组件交互
  */
+import { EntityFactory } from './components';
 // ==========================================
 // 系统基类 - System Base Class
 // ==========================================
@@ -774,6 +775,227 @@ export class SystemManager {
     }
 }
 // ==========================================
+// 任务系统 - Quest System
+// ==========================================
+export class QuestSystem extends BaseSystem {
+    constructor() {
+        super('任务管理', 45);
+        this.updateInterval = 1000;
+    }
+    getRequiredComponents() {
+        return ['quest', 'resource'];
+    }
+    filterEntities(entities) {
+        return entities.filter(entity => this.getRequiredComponents().every(type => entity[type]));
+    }
+    update(entities, dt) {
+        const filteredEntities = this.filterEntities(entities);
+        filteredEntities.forEach(entity => {
+            const questComp = entity['quest'];
+            // 重置日常任务
+            questComp.resetDailyQuests();
+            // 检查任务解锁条件
+            this.checkQuestUnlocks(entity, questComp);
+            // 自动发放已完成任务的奖励
+            this.autoClaimRewards(entity, questComp);
+        });
+    }
+    /**
+     * 检查任务解锁条件
+     */
+    checkQuestUnlocks(entity, questComp) {
+        questComp.quests.forEach(quest => {
+            if (quest.unlocked || !quest.unlockCondition)
+                return;
+            const condition = quest.unlockCondition;
+            let conditionMet = false;
+            switch (condition.type) {
+                case '收集资源':
+                    conditionMet = entity['resource']?.resources[condition.target] >= condition.amount;
+                    break;
+                case '达到等级':
+                    conditionMet = entity['character']?.level >= condition.amount;
+                    break;
+                case '完成任务':
+                    conditionMet = questComp.completedQuests.includes(condition.target);
+                    break;
+                case '拥有卡牌':
+                    conditionMet = entity['deck']?.library.some((card) => card.identity?.name === condition.target) ?? false;
+                    break;
+            }
+            if (conditionMet) {
+                quest.unlocked = true;
+                console.log(`🔓 任务解锁: ${quest.title}`);
+            }
+        });
+    }
+    /**
+     * 自动发放已完成任务的奖励
+     */
+    autoClaimRewards(entity, questComp) {
+        const claimable = questComp.getClaimableQuests();
+        claimable.forEach(quest => {
+            const rewards = questComp.claimRewards(quest.id);
+            if (rewards) {
+                this.giveRewards(entity, rewards);
+                console.log(`🎁 领取任务奖励: ${quest.title}`);
+            }
+        });
+    }
+    /**
+     * 发放奖励
+     */
+    giveRewards(entity, rewards) {
+        rewards.forEach(reward => {
+            switch (reward.type) {
+                case '资源':
+                    if (entity['resource']) {
+                        entity['resource'].addResource(reward.target, reward.amount);
+                        console.log(`   获得 ${reward.amount} ${reward.target}`);
+                    }
+                    break;
+                case '金币':
+                    if (entity['resource']) {
+                        entity['resource'].addResource('金币', reward.amount);
+                        console.log(`   获得 ${reward.amount} 金币`);
+                    }
+                    break;
+                case '经验':
+                    if (entity['character']) {
+                        entity['character'].addExperience(reward.amount);
+                        console.log(`   获得 ${reward.amount} 经验值`);
+                    }
+                    break;
+                case '卡牌':
+                    if (entity['deck']) {
+                        const cardName = reward.target;
+                        // 简单推断卡牌类型
+                        let cardType = '作物';
+                        if (['小鸡', '奶牛', '羊', '猪'].includes(cardName)) {
+                            cardType = '动物';
+                        }
+                        else if (['锄头', '水桶', '镰刀', '斧头'].includes(cardName)) {
+                            cardType = '工具';
+                        }
+                        else if (['农舍', '仓库', '风车', '小型农舍'].includes(cardName)) {
+                            cardType = '建筑';
+                        }
+                        else if (['工人', '助手'].includes(cardName)) {
+                            cardType = '人物';
+                        }
+                        const newCard = EntityFactory.createCardEntity(cardType, {
+                            identity: { name: cardName, description: `任务奖励卡牌：${cardName}` }
+                        });
+                        // 添加到牌库和弃牌堆，以便洗牌时可以抽到
+                        entity['deck'].library.push(newCard);
+                        entity['deck'].discardPile.push(newCard);
+                        console.log(`   获得卡牌: ${reward.target}`);
+                    }
+                    break;
+            }
+        });
+    }
+    /**
+     * 外部调用：更新任务进度
+     */
+    updateQuestProgress(entity, objectiveType, target, amount = 1) {
+        if (!entity['quest'])
+            return;
+        const questComp = entity['quest'];
+        questComp.updateProgress(objectiveType, target, amount);
+    }
+    /**
+     * 添加预设的初始任务
+     */
+    addDefaultQuests(entity) {
+        if (!entity['quest'])
+            return;
+        const questComp = entity['quest'];
+        // 主线任务1
+        questComp.addQuest({
+            id: 'main_1',
+            type: '主线',
+            title: '初入农庄',
+            description: '收集10个作物资源',
+            objectives: [
+                {
+                    id: 'obj_1',
+                    type: '收集资源',
+                    target: '作物',
+                    requiredAmount: 10,
+                    currentAmount: 0,
+                    completed: false
+                }
+            ],
+            rewards: [
+                { type: '金币', target: '', amount: 100 },
+                { type: '资源', target: '木材', amount: 50 }
+            ],
+            unlocked: true,
+            completed: false,
+            claimed: false,
+            priority: 1
+        });
+        // 主线任务2
+        questComp.addQuest({
+            id: 'main_2',
+            type: '主线',
+            title: '积累财富',
+            description: '收集50个金币',
+            objectives: [
+                {
+                    id: 'obj_2',
+                    type: '收集资源',
+                    target: '金币',
+                    requiredAmount: 50,
+                    currentAmount: 0,
+                    completed: false
+                }
+            ],
+            rewards: [
+                { type: '经验', target: '', amount: 200 },
+                { type: '资源', target: '石头', amount: 30 }
+            ],
+            unlocked: false,
+            completed: false,
+            claimed: false,
+            unlockCondition: {
+                type: '完成任务',
+                target: 'main_1',
+                amount: 1
+            },
+            priority: 2
+        });
+        // 日常任务
+        questComp.addQuest({
+            id: 'daily_1',
+            type: '日常',
+            title: '每日劳作',
+            description: '生产5个作物资源',
+            objectives: [
+                {
+                    id: 'obj_daily_1',
+                    type: '生产物品',
+                    target: '作物',
+                    requiredAmount: 5,
+                    currentAmount: 0,
+                    completed: false
+                }
+            ],
+            rewards: [
+                { type: '金币', target: '', amount: 50 },
+                { type: '资源', target: '作物', amount: 10 }
+            ],
+            unlocked: true,
+            completed: false,
+            claimed: false,
+            dailyReset: true,
+            priority: 10
+        });
+        console.log('📋 初始任务已添加');
+    }
+}
+// ==========================================
 // 默认系统配置
 // ==========================================
 export function createDefaultSystems() {
@@ -788,7 +1010,8 @@ export function createDefaultSystems() {
         .registerSystem(new EffectSystem())
         .registerSystem(new ComboSystem())
         .registerSystem(new WorldSystem())
-        .registerSystem(new GameStateSystem());
+        .registerSystem(new GameStateSystem())
+        .registerSystem(new QuestSystem());
     return systemManager;
 }
 // ==========================================

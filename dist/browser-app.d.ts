@@ -1,4 +1,8 @@
+/**
+ * 🏡 农庄卡牌：田园物语 - 包含绘图功能的浏览器应用入口
+ */
 declare class FarmGameEngine {
+    debug: boolean;
     gameRunning: boolean;
     canvas: HTMLElement;
     ctx: any;
@@ -37,6 +41,7 @@ declare class FarmGameEngine {
         icon: string;
         desc: string;
     }[];
+    log(...args: any[]): void;
     initialize(): void;
     setupCanvas(): void;
     setupDragAndDrop(): void;
