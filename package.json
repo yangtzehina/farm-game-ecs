@@ -8,7 +8,7 @@
     "start": "node src/index.js",
     "dev": "node src/engine.js",
     "build": "node src/index.js",
-    "test": "node src/test.js",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "debug": "node src/index.js --debug",
     "profile": "node src/index.js --profile",
     "build:ts": "tsc",
@@ -30,6 +30,7 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@babel/preset-env": "^7.20.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.19.37",
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
@@ -40,6 +41,8 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
     "gh-pages": "^6.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "uglifyify": "^5.0.2"

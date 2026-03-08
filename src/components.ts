@@ -123,6 +123,10 @@ export class ResourceComponent {
     '动物': 500
   };
 
+  constructor(config: Partial<ResourceComponent> = {}) {
+    Object.assign(this, config);
+  }
+
   addResource(type: string, amount: number): boolean {
     if (this.resources[type] === undefined) return false;
     if (this.resources[type] + amount > this.maxStorage[type]) return false;
@@ -153,6 +157,10 @@ export class ProductionComponent {
   public efficiency: number = 1.0;
   public quality: number = 1.0;
   public automation: boolean = false;
+
+  constructor(config: Partial<ProductionComponent> = {}) {
+    Object.assign(this, config);
+  }
 
   calculateProduction(
     baseAmount: number,
@@ -198,6 +206,10 @@ export class CropComponent {
   public quality: number = 1.0;
   public fertilityBonus: number = 0;
 
+  constructor(config: Partial<CropComponent> = {}) {
+    Object.assign(this, config);
+  }
+
   calculateYield(): number {
     return this.yield * this.quality * (1 + this.fertilityBonus);
   }
@@ -217,6 +229,10 @@ export class AnimalComponent {
   public maxAge: number = 100;
   public health: number = 100;
 
+  constructor(config: Partial<AnimalComponent> = {}) {
+    Object.assign(this, config);
+  }
+
   getProductionBonus(): number {
     return Math.min(1.5, Math.max(0.5, this.happiness / 100));
   }
@@ -233,6 +249,10 @@ export class ToolComponent {
   public durability: number = 100;
   public maxDurability: number = 100;
   public toolType: '收获' | '耕作' | '建造' | '战斗' = '收获';
+
+  constructor(config: Partial<ToolComponent> = {}) {
+    Object.assign(this, config);
+  }
 
   use(): boolean {
     if (this.durability > 0) {
@@ -265,6 +285,10 @@ export class BuildingComponent {
   public productivity: number = 1.0;
   public maintenanceCost: number = 5;
 
+  constructor(config: Partial<BuildingComponent> = {}) {
+    Object.assign(this, config);
+  }
+
   calculateProductionBonus(): number {
     return this.workers / this.maxWorkers * this.productivity;
   }
@@ -294,6 +318,10 @@ export class CharacterComponent {
   public experience: number = 0;
   public level: number = 1;
   public job: string = '农民';
+
+  constructor(config: Partial<CharacterComponent> = {}) {
+    Object.assign(this, config);
+  }
 
   addExperience(amount: number): boolean {
     const requiredExp = this.level * 100;
@@ -332,6 +360,10 @@ export class UpgradeTreeComponent {
     effects: Array<{ property: string; value: number }>;
   }> = [];
 
+  constructor(config: Partial<UpgradeTreeComponent> = {}) {
+    Object.assign(this, config);
+  }
+
   getAvailableUpgrades(currentLevel: number): any[] {
     return this.upgrades.filter(
       u => u.level < u.maxLevel && 
@@ -358,6 +390,10 @@ export class UpgradeComponent {
     '木材': 10,
     '作物':5
   };
+
+  constructor(config: Partial<UpgradeComponent> = {}) {
+    Object.assign(this, config);
+  }
 
   canUpgrade(
     upgradeCost: { [key: string]: number },
@@ -388,6 +424,10 @@ export class CombatComponent {
   public criticalMultiplier: number = 2.0;
   public attackPattern: '近战' | '远程' | '范围' = '近战';
 
+  constructor(config: Partial<CombatComponent> = {}) {
+    Object.assign(this, config);
+  }
+
   calculateDamage(): number {
     const baseDamage = this.damage;
     const crit = Math.random() < this.criticalChance;
@@ -411,6 +451,10 @@ export class EffectComponent {
     stacking: number;
     source: string;
   }> = [];
+
+  constructor(config: Partial<EffectComponent> = {}) {
+    Object.assign(this, config);
+  }
 
   addEffect(
     name: string,
@@ -463,6 +507,10 @@ export class DeckComponent {
   public drawPile: any[] = []; // 抽牌堆：待抽的卡牌
   public discardPile: any[] = []; // 弃牌堆：打出/弃掉的卡牌
 
+  constructor(config: Partial<DeckComponent> = {}) {
+    Object.assign(this, config);
+  }
+
   shuffleDrawPile(): void {
     for (let i = this.drawPile.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -496,6 +544,10 @@ export class HandComponent {
   public cards: any[] = [];
   public maxHandSize: number = 8; // 手牌上限
 
+  constructor(config: Partial<HandComponent> = {}) {
+    Object.assign(this, config);
+  }
+
   addCard(card: any): boolean {
     if (this.cards.length >= this.maxHandSize) return false;
     this.cards.push(card);
@@ -521,6 +573,10 @@ export class EnergyComponent {
   public current: number = 3;
   public max: number = 10;
   public regenPerTurn: number = 2; // 每回合恢复量
+
+  constructor(config: Partial<EnergyComponent> = {}) {
+    Object.assign(this, config);
+  }
 
   spend(amount: number): boolean {
     if (amount < 0) return false;
@@ -588,6 +644,10 @@ export class QuestComponent {
   public completedQuests: string[] = [];
   public dailyResetTime: number = 86400000; // 24小时
   public lastDailyReset: number = Date.now();
+
+  constructor(config: Partial<QuestComponent> = {}) {
+    Object.assign(this, config);
+  }
   
   /**
    * 添加新任务
@@ -701,6 +761,10 @@ export class WorldComponent {
     active: boolean;
   }> = [];
 
+  constructor(config: Partial<WorldComponent> = {}) {
+    Object.assign(this, config);
+  }
+
   getWeatherEffect(): number {
     // 根据昼夜周期计算天气效果
     return Math.sin(this.dayNightCycle / 10000) * 0.5 + 0.5;
@@ -719,6 +783,10 @@ export class GameStateComponent {
   public streak: number = 0;
   public highScore: number = 0;
   public playTime: number = 0;
+
+  constructor(config: Partial<GameStateComponent> = {}) {
+    Object.assign(this, config);
+  }
 
   increaseCombo() {
     this.combo++;
@@ -750,6 +818,10 @@ export class ComboComponent {
     strength: number;
     active: boolean;
   }> = [];
+
+  constructor(config: Partial<ComboComponent> = {}) {
+    Object.assign(this, config);
+  }
 
   // 激活组合技
   activateCombo(
