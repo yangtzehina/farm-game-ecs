@@ -39,6 +39,9 @@ export class FarmGameEngine {
   private frameTime: number = 1000 / 60; // 约16.67ms
   private gameLoopId: number | null = null;
 
+  // 事件系统
+  private eventListeners: { [event: string]: Array<(...args: any[]) => void> } = {};
+
   private constructor() {
     this.systemManager = createDefaultSystems();
   }
@@ -97,8 +100,30 @@ export class FarmGameEngine {
       cancelAnimationFrame(this.gameLoopId);
       this.gameLoopId = null;
     }
-    
     console.log('🛑 游戏引擎停止');
+  }
+
+  // ==========================================
+  // 事件系统
+  // ==========================================
+
+  /**
+   * 注册事件监听
+   */
+  public on(event: string, callback: (...args: any[]) => void): void {
+    if (!this.eventListeners[event]) {
+      this.eventListeners[event] = [];
+    }
+    this.eventListeners[event].push(callback);
+  }
+
+  /**
+   * 触发事件
+   */
+  public emit(event: string, ...args: any[]): void {
+    if (this.eventListeners[event]) {
+      this.eventListeners[event].forEach(callback => callback(...args));
+    }
   }
 
   private currentLoop(): void {
