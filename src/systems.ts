@@ -30,7 +30,8 @@ import {
   QuestComponent,
   Quest,
   QuestObjectiveType,
-  QuestReward
+  QuestReward,
+  EntityFactory
 } from './components';
 
 // ==========================================
@@ -818,15 +819,17 @@ export class ComboSystem extends BaseSystem {
 
   update(entities: any[], dt: number): void {
     const filteredEntities = this.filterEntities(entities);
-    
+    if (filteredEntities.length === 0) return;
+
+    // 获取所有已打出的卡牌（场上的实体）
+    // 将过滤操作移出循环，避免对每个玩家重复执行
+    const fieldCards = entities.filter(e => e['card'] && e['position']);
+
     filteredEntities.forEach(player => {
       const comboComp = player['combo'] as ComboComponent;
       
       // 更新组合持续时间
       comboComp.update(dt);
-      
-      // 获取所有已打出的卡牌（场上的实体）
-      const fieldCards = entities.filter(e => e['card'] && e['position']);
       
       // 检查所有组合条件
       this.COMBO_CONFIG.forEach(comboConfig => {
@@ -1144,7 +1147,33 @@ export class QuestSystem extends BaseSystem {
           break;
         case '卡牌':
           if (entity['deck']) {
-            // TODO: 实现卡牌奖励逻辑
+            const cardName = reward.target;
+
+            // 简单推断卡牌类型
+            let cardType: '作物' | '动物' | '工具' | '建筑' | '人物' = '作物';
+            if (['小鸡', '奶牛', '羊', '猪'].includes(cardName)) {
+              cardType = '动物';
+            } else if (['锄头', '水桶', '镰刀', '斧头'].includes(cardName)) {
+              cardType = '工具';
+            } else if (['农舍', '仓库', '风车', '小型农舍'].includes(cardName)) {
+              cardType = '建筑';
+            } else if (['工人', '助手'].includes(cardName)) {
+              cardType = '人物';
+            }
+
+            const newCard = EntityFactory.createCardEntity(cardType, {
+              identity: { name: cardName, description: `任务奖励卡牌：${cardName}` }
+            });
+
+            // 添加到牌库记录，并在弃牌堆放置可被抽到的实际卡牌实例
+            // 为了防止同一个对象引用导致的潜在问题，我们深拷贝或者重新创建一个实例用于战斗循环
+            const playableCard = EntityFactory.createCardEntity(cardType, {
+              identity: { name: cardName, description: `任务奖励卡牌：${cardName}` }
+            });
+
+            entity['deck'].library.push(newCard);
+            entity['deck'].discardPile.push(playableCard);
+
             console.log(`   获得卡牌: ${reward.target}`);
           }
           break;

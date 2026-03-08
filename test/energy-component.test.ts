@@ -36,6 +36,12 @@ describe('EnergyComponent', () => {
         assert.strictEqual(result, true);
         assert.strictEqual(energy.current, 5);
     });
+
+    it('should not allow spending negative energy', () => {
+        const result = energy.spend(-2);
+        assert.strictEqual(result, false);
+        assert.strictEqual(energy.current, 5);
+    });
   });
 
   describe('regen', () => {

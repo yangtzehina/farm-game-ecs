@@ -5,7 +5,7 @@
  * 按照Data-Oriented Design原则设计
  * 重点在于数据处理和组件交互
  */
-import { Position } from './components';
+import { Position, QuestObjectiveType } from './components';
 export declare abstract class BaseSystem {
     readonly name: string;
     readonly priority: number;
@@ -159,6 +159,32 @@ export declare class SystemManager {
         lastUpdate: number;
         averageUpdateTime: number;
     }>;
+}
+export declare class QuestSystem extends BaseSystem {
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    /**
+     * 检查任务解锁条件
+     */
+    private checkQuestUnlocks;
+    /**
+     * 自动发放已完成任务的奖励
+     */
+    private autoClaimRewards;
+    /**
+     * 发放奖励
+     */
+    private giveRewards;
+    /**
+     * 外部调用：更新任务进度
+     */
+    updateQuestProgress(entity: any, objectiveType: QuestObjectiveType, target: string, amount?: number): void;
+    /**
+     * 添加预设的初始任务
+     */
+    addDefaultQuests(entity: any): void;
 }
 export declare function createDefaultSystems(): SystemManager;
 export declare function debugSystemPerformance(systems: BaseSystem[]): void;

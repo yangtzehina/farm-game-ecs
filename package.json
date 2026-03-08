@@ -13,7 +13,8 @@
     "profile": "node src/index.js --profile",
     "build:ts": "tsc",
     "build:browser": "browserify src/browser-app.js -t [ babelify ] -o dist/bundle.js && cp src/index.html dist/index.html",
-    "deploy:gh": "npm run build:browser && gh-pages -d dist"
+    "deploy:gh": "npm run build:browser && gh-pages -d dist",
+    "test:all": "tsx test/*.test.ts"
   },
   "keywords": [
     "农庄",
@@ -40,7 +41,7 @@
     "eslint-plugin-promise": "^6.1.1",
     "gh-pages": "^6.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3",
+    "typescript": "^5.9.3",
     "uglifyify": "^5.0.2"
   },
   "dependencies": {
