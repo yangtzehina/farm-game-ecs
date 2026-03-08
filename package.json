@@ -30,6 +30,7 @@
     "@babel/core": "^7.20.0",
     "@babel/preset-env": "^7.20.0",
     "@types/node": "^20.19.37",
+    "@vitest/coverage-v8": "^4.0.18",
     "babelify": "^10.0.0",
     "browserify": "^17.0.0",
     "cssify": "^1.0.3",
@@ -41,7 +42,8 @@
     "gh-pages": "^6.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
-    "uglifyify": "^5.0.2"
+    "uglifyify": "^5.0.2",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "buffer": "^6.0.3",

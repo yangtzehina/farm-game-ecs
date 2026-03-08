@@ -7,6 +7,7 @@
 
 import { FarmGameEngine } from './engine';
 import { getComponent, addComponent, removeComponent } from './components';
+import { metaProgressionManager } from './metaProgression';
 import prompt from 'prompt-sync';
 import chalk from 'chalk';
 
@@ -667,5 +668,196 @@ export class FarmGameUIManager {
     console.log(`  🔧 系统: ${stats.systems}`);
     console.log(`  📝 组件: ${stats.totalComponents}`);
     console.log(`  💾 内存: ${stats.memory} MB`);
+  }
+
+  // ==========================================
+  // 显示图鉴系统
+  // ==========================================
+  private showCollection(): void {
+    console.clear();
+    console.log(chalk.blue('📚 图鉴系统'));
+    console.log(chalk.gray('=' . repeat(80)));
+    
+    console.log(chalk.cyan('请选择查看的分类:'));
+    console.log('1. 🏆 成就');
+    console.log('2. 🎴 卡牌');
+    console.log('3. 💎 遗物');
+    console.log('4. 🧑🌾 角色');
+    console.log('5. 🔥 难度');
+    console.log('0. 返回');
+    
+    const choice = this.prompt('请选择: ');
+    
+    switch (choice) {
+      case '1':
+        this.showAchievements();
+        break;
+      case '2':
+        this.showUnlockableCards();
+        break;
+      case '3':
+        this.showUnlockableRelics();
+        break;
+      case '4':
+        this.showUnlockableCharacters();
+        break;
+      case '5':
+        this.showUnlockableDifficulties();
+        break;
+      default:
+        return;
+    }
+  }
+
+  private showAchievements(): void {
+    console.clear();
+    console.log(chalk.blue('🏆 成就列表'));
+    console.log(chalk.gray('=' . repeat(80)));
+    
+    const achievements = metaProgressionManager.getAllAchievements();
+    const unlockedCount = achievements.filter(a => a.unlocked).length;
+    const totalCount = achievements.length;
+    
+    console.log(chalk.yellow(`进度: ${unlockedCount}/${totalCount} (${Math.round(unlockedCount/totalCount*100)}%)`));
+    console.log();
+
+    const typeMap = {
+      collection: '📦 收集类',
+      challenge: '⚔️ 挑战类',
+      gameplay: '🎮 玩法类'
+    };
+
+    const rarityColors = {
+      common: chalk.gray,
+      rare: chalk.blue,
+      epic: chalk.magenta,
+      legendary: chalk.yellow
+    };
+
+    Object.keys(typeMap).forEach(type => {
+      console.log(chalk.cyan(typeMap[type as keyof typeof typeMap]));
+      console.log(chalk.gray('-' . repeat(80)));
+      
+      achievements
+        .filter(a => a.type === type)
+        .forEach(ach => {
+          const color = ach.unlocked ? chalk.green : rarityColors[ach.rarity as keyof typeof rarityColors];
+          const status = ach.unlocked ? '✅' : `⏳ ${ach.progress}/${ach.target}`;
+          console.log(color(`${status} ${ach.icon} ${ach.name} - ${ach.description}`));
+        });
+      
+      console.log();
+    });
+    
+    this.prompt('按任意键返回...');
+    this.showCollection();
+  }
+
+  private showUnlockableCards(): void {
+    console.clear();
+    console.log(chalk.blue('🎴 卡牌图鉴'));
+    console.log(chalk.gray('=' . repeat(80)));
+    
+    const allCards = metaProgressionManager['unlockMap'].values().filter((u: any) => u.type === 'card');
+    const unlocked = metaProgressionManager.getUnlockedItems('card');
+    
+    console.log(chalk.yellow(`已解锁: ${unlocked.length}/${allCards.length}`));
+    console.log();
+    
+    allCards.forEach((card: any) => {
+      const isUnlocked = metaProgressionManager.isUnlocked(card.id);
+      const color = isUnlocked ? chalk.green : chalk.gray;
+      const status = isUnlocked ? '✅' : '🔒';
+      console.log(color(`${status} ${card.icon} ${card.name} - ${card.description}`));
+      if (!isUnlocked && card.unlockCondition.achievementId) {
+        const ach = metaProgressionManager['achievementMap'].get(card.unlockCondition.achievementId);
+        console.log(color(`   解锁条件: 完成成就「${ach?.name}」`));
+      }
+    });
+    
+    console.log();
+    this.prompt('按任意键返回...');
+    this.showCollection();
+  }
+
+  private showUnlockableRelics(): void {
+    console.clear();
+    console.log(chalk.blue('💎 遗物图鉴'));
+    console.log(chalk.gray('=' . repeat(80)));
+    
+    const allRelics = metaProgressionManager['unlockMap'].values().filter((u: any) => u.type === 'relic');
+    const unlocked = metaProgressionManager.getUnlockedItems('relic');
+    
+    console.log(chalk.yellow(`已解锁: ${unlocked.length}/${allRelics.length}`));
+    console.log();
+    
+    allRelics.forEach((relic: any) => {
+      const isUnlocked = metaProgressionManager.isUnlocked(relic.id);
+      const color = isUnlocked ? chalk.green : chalk.gray;
+      const status = isUnlocked ? '✅' : '🔒';
+      console.log(color(`${status} ${relic.icon} ${relic.name} - ${relic.description}`));
+      if (!isUnlocked && relic.unlockCondition.achievementId) {
+        const ach = metaProgressionManager['achievementMap'].get(relic.unlockCondition.achievementId);
+        console.log(color(`   解锁条件: 完成成就「${ach?.name}」`));
+      }
+    });
+    
+    console.log();
+    this.prompt('按任意键返回...');
+    this.showCollection();
+  }
+
+  private showUnlockableCharacters(): void {
+    console.clear();
+    console.log(chalk.blue('🧑🌾 角色图鉴'));
+    console.log(chalk.gray('=' . repeat(80)));
+    
+    const allChars = metaProgressionManager['unlockMap'].values().filter((u: any) => u.type === 'character');
+    const unlocked = metaProgressionManager.getUnlockedItems('character');
+    
+    console.log(chalk.yellow(`已解锁: ${unlocked.length}/${allChars.length}`));
+    console.log();
+    
+    allChars.forEach((char: any) => {
+      const isUnlocked = metaProgressionManager.isUnlocked(char.id);
+      const color = isUnlocked ? chalk.green : chalk.gray;
+      const status = isUnlocked ? '✅' : '🔒';
+      console.log(color(`${status} ${char.icon} ${char.name} - ${char.description}`));
+      if (!isUnlocked && char.unlockCondition.achievementId) {
+        const ach = metaProgressionManager['achievementMap'].get(char.unlockCondition.achievementId);
+        console.log(color(`   解锁条件: 完成成就「${ach?.name}」`));
+      }
+    });
+    
+    console.log();
+    this.prompt('按任意键返回...');
+    this.showCollection();
+  }
+
+  private showUnlockableDifficulties(): void {
+    console.clear();
+    console.log(chalk.blue('🔥 难度图鉴'));
+    console.log(chalk.gray('=' . repeat(80)));
+    
+    const allDiffs = metaProgressionManager['unlockMap'].values().filter((u: any) => u.type === 'difficulty');
+    const unlocked = metaProgressionManager.getUnlockedItems('difficulty');
+    
+    console.log(chalk.yellow(`已解锁: ${unlocked.length}/${allDiffs.length}`));
+    console.log();
+    
+    allDiffs.forEach((diff: any) => {
+      const isUnlocked = metaProgressionManager.isUnlocked(diff.id);
+      const color = isUnlocked ? chalk.green : chalk.gray;
+      const status = isUnlocked ? '✅' : '🔒';
+      console.log(color(`${status} ${diff.icon} ${diff.name} - ${diff.description}`));
+      if (!isUnlocked && diff.unlockCondition.achievementId) {
+        const ach = metaProgressionManager['achievementMap'].get(diff.unlockCondition.achievementId);
+        console.log(color(`   解锁条件: 完成成就「${ach?.name}」`));
+      }
+    });
+    
+    console.log();
+    this.prompt('按任意键返回...');
+    this.showCollection();
   }
 }

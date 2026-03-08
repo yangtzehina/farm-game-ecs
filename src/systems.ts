@@ -32,6 +32,9 @@ import {
   QuestObjectiveType,
   QuestReward
 } from './components';
+import { getRandomEvent, ALL_EVENTS } from './events';
+import { addRelic, ALL_RELICS } from './relics';
+import { metaProgressionManager } from './metaProgression';
 
 // ==========================================
 // 系统基类 - System Base Class
@@ -325,6 +328,10 @@ export class CardPlaySystem extends BaseSystem {
     }
     
     console.log(`🤲 当前手牌: ${hand.cards.map(c => c.identity.name).join(', ')}`);
+    
+    // 3. 回合数+1
+    gameState.turn += 1;
+    console.log(`🔄 第${gameState.turn}回合结束`);
   }
 
   // 打出卡牌（仅做校验和抽离，添加实体逻辑在外层处理）
@@ -1264,6 +1271,140 @@ export class QuestSystem extends BaseSystem {
 }
 
 // ==========================================
+// 随机事件系统 - Random Event System
+// ==========================================
+export class EventSystem extends BaseSystem {
+  constructor() {
+    super('事件管理', 35);
+    this.updateInterval = 1000;
+  }
+
+  getRequiredComponents(): string[] {
+    return ['gameState'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const filteredEntities = this.filterEntities(entities);
+    
+    filteredEntities.forEach(entity => {
+      const gameState = entity['gameState'] as GameStateComponent;
+      
+      // 初始化遗物相关属性
+      if (!entity.relics) entity.relics = [];
+      if (!entity.relicPool) entity.relicPool = ALL_RELICS.filter(r => r.rarity === 'common' || r.rarity === 'rare');
+      
+      // 每3回合触发一次随机事件
+      if (gameState.turn % 3 === 0 && gameState.turn > 0 && !gameState.eventTriggeredThisTurn) {
+        // 检查是否有负面事件免疫
+        if (entity.negativeEventImmunity && entity.negativeEventImmunity > 0) {
+          entity.negativeEventImmunity -= 1;
+          console.log('🛡️  遗物免疫了本次负面事件！');
+          gameState.eventTriggeredThisTurn = true;
+          return;
+        }
+
+        // 调整概率：有正面事件加成的话提升正面概率
+        const positiveBonus = entity.positiveEventBonus || 0;
+        const roll = Math.random() * 100;
+        let event;
+        if (roll < 60 + positiveBonus * 100) {
+          event = ALL_EVENTS.filter(e => e.type === 'positive')[Math.floor(Math.random() * ALL_EVENTS.filter(e => e.type === 'positive').length)];
+        } else if (roll < 85 + positiveBonus * 100) {
+          event = ALL_EVENTS.filter(e => e.type === 'neutral')[Math.floor(Math.random() * ALL_EVENTS.filter(e => e.type === 'neutral').length)];
+        } else {
+          event = ALL_EVENTS.filter(e => e.type === 'negative')[Math.floor(Math.random() * ALL_EVENTS.filter(e => e.type === 'negative').length)];
+        }
+
+        // 触发事件效果
+        event.effect(entity);
+        gameState.eventTriggeredThisTurn = true;
+        console.log(`🎲 随机事件触发: [${event.type}] ${event.name} - ${event.description}`);
+      }
+
+      // 重置本回合事件触发标记
+      if (gameState.turn % 3 !== 0) {
+        gameState.eventTriggeredThisTurn = false;
+      }
+    });
+  }
+}
+
+// ==========================================
+// 遗物系统 - Relic System
+// ==========================================
+export class RelicSystem extends BaseSystem {
+  constructor() {
+    super('遗物管理', 30);
+    this.updateInterval = 1000;
+  }
+
+  getRequiredComponents(): string[] {
+    return ['gameState'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const filteredEntities = this.filterEntities(entities);
+    
+    filteredEntities.forEach(entity => {
+      const gameState = entity['gameState'] as GameStateComponent;
+      
+      // 初始化遗物列表
+      if (!entity.relics) {
+        entity.relics = [];
+        entity.relicPool = ALL_RELICS.filter(r => r.rarity === 'common' || r.rarity === 'rare');
+      }
+
+      // 最多携带6个遗物
+      if (entity.relics.length > 6) {
+        entity.relics = entity.relics.slice(0, 6);
+        console.log('⚠️  遗物数量超过上限，已自动丢弃多余遗物');
+      }
+
+      // 检查任务完成是否奖励遗物
+      const questComp = entity['quest'] as QuestComponent;
+      if (questComp) {
+        const completedMidQuests = questComp.completedQuests.filter((qid: string) => qid.startsWith('main_') && parseInt(qid.split('_')[1]) >= 3);
+        completedMidQuests.forEach((qid: string) => {
+          if (!entity.rewardedQuests?.includes(qid)) {
+            entity.rewardedQuests = entity.rewardedQuests || [];
+            entity.rewardedQuests.push(qid);
+            // 奖励一个随机稀有遗物
+            const rareRelics = ALL_RELICS.filter(r => r.rarity === 'rare' || r.rarity === 'epic');
+            const randomRelic = rareRelics[Math.floor(Math.random() * rareRelics.length)];
+            const success = addRelic(entity, randomRelic.id);
+            if (success) {
+              console.log(`🎁 任务奖励遗物: ${randomRelic.name} - ${randomRelic.description}`);
+            }
+          }
+        });
+      }
+    });
+  }
+
+  // 外部调用：添加遗物
+  addRelic(entity: any, relicId: string): boolean {
+    return addRelic(entity, relicId);
+  }
+
+  // 获取所有遗物
+  getAllRelics() {
+    return [...ALL_RELICS];
+  }
+}
+
+// ==========================================
 // 默认系统配置
 // ==========================================
 
@@ -1281,7 +1422,9 @@ export function createDefaultSystems(): SystemManager {
     .registerSystem(new ComboSystem())
     .registerSystem(new WorldSystem())
     .registerSystem(new GameStateSystem())
-    .registerSystem(new QuestSystem());
+    .registerSystem(new QuestSystem())
+    .registerSystem(new EventSystem())
+    .registerSystem(new RelicSystem());
 
   return systemManager;
 }

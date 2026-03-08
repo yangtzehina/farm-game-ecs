@@ -718,6 +718,8 @@ export class GameStateComponent {
   public streak: number = 0;
   public highScore: number = 0;
   public playTime: number = 0;
+  public turn: number = 0;
+  public eventTriggeredThisTurn: boolean = false;
 
   increaseCombo() {
     this.combo++;
