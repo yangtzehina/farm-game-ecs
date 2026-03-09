@@ -1284,12 +1284,42 @@ class FarmGameEngine {
     try {
       const saved = localStorage.getItem('farmGameSave');
       if (saved) {
-        this.gameState = JSON.parse(saved);
+        const savedState = JSON.parse(saved);
+        // 兼容旧存档，补全新字段
+        this.gameState = {
+          ...this.gameState,
+          ...savedState,
+          // 补全新增的字段
+          freeRefreshUsed: savedState.freeRefreshUsed ?? false,
+          shopCards: savedState.shopCards ?? [],
+          // 补全新增的资源
+          resources: {
+            wheat: 0,
+            carrot: 0,
+            potato: 0,
+            tomato: 0,
+            chicken: 0,
+            duck: 0,
+            sheep: 0,
+            pig: 0,
+            egg: 0,
+            duckEgg: 0,
+            milk: 0,
+            wool: 0,
+            pork: 0,
+            apple: 0,
+            flour: 0,
+            ...savedState.resources
+          }
+        };
         console.log('📂 游戏已加载');
         this.showMessage('✅ 成功加载存档', '#27ae60');
       }
     } catch (e) {
       console.error('❌ 加载游戏失败', e);
+      // 加载失败就重置游戏状态
+      localStorage.removeItem('farmGameSave');
+      this.showMessage('⚠️ 存档损坏，已重置游戏', '#e74c3c');
     }
   }
   autoSave() {
