@@ -439,49 +439,70 @@ class FarmGameEngine {
   // 更新手牌UI
   updateHandCardsUI() {
     const handArea = document.getElementById('handArea');
-    const rarityColor = {
-      common: '#3498db',
-      uncommon: '#27ae60',
-      rare: '#9b59b6',
-      legendary: '#e67e22'
+    const rarityClass = {
+      common: 'rarity-common',
+      uncommon: 'rarity-uncommon',
+      rare: 'rarity-rare',
+      legendary: 'rarity-legendary'
     };
     handArea.innerHTML = this.gameState.handCards.map(card => `
-      <div class="card" draggable="true" data-card-id="${card.id}" data-cost="${card.cost}" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid ${rarityColor[card.rarity]};">
-        <div style="font-size: 2em; margin-bottom: 5px;">${card.icon}</div>
-        <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">${card.name}</div>
-        <div style="font-size: 0.7em; color: #7f8c8d; margin-bottom: 3px;">${card.desc}</div>
-        <div style="font-size: 0.7em; color: ${rarityColor[card.rarity]}; margin-bottom: 3px;">Lv.${card.level}</div>
-        <div style="font-size: 0.8em; color: #f39c12;">⚡ ${card.cost}</div>
+      <div class="card ${rarityClass[card.rarity]}" draggable="true" data-card-id="${card.id}" data-cost="${card.cost}">
+        <div class="icon">${card.icon}</div>
+        <div class="name">${card.name}</div>
+        <div class="desc">${card.desc}</div>
+        <div class="level" style="color: ${card.rarity === 'common' ? '#3498db' : card.rarity === 'uncommon' ? '#27ae60' : card.rarity === 'rare' ? '#9b59b6' : '#e67e22'};">Lv.${card.level}</div>
+        <div class="cost">⚡ ${card.cost}</div>
       </div>
     `).join('');
   }
 
   // 更新商店UI
   updateShopUI() {
-    const shopArea = document.getElementById('shopArea');
-    const rarityColor = {
-      common: '#3498db',
-      uncommon: '#27ae60',
-      rare: '#9b59b6',
-      legendary: '#e67e22'
+    const shopCards = document.getElementById('shopCards');
+    const rarityClass = {
+      common: 'rarity-common',
+      uncommon: 'rarity-uncommon',
+      rare: 'rarity-rare',
+      legendary: 'rarity-legendary'
     };
-    shopArea.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <h4 style="margin: 0;">🛒 每日商店</h4>
-        <button class="btn btn-sm btn-primary" onclick="window.FarmGameApp.refreshHandCards()">🔄 刷新手牌（每日免费1次）</button>
+    shopCards.innerHTML = this.gameState.shopCards.map(card => `
+      <div class="shop-card ${rarityClass[card.rarity]}">
+        <div class="shop-card-icon">${card.icon}</div>
+        <div class="shop-card-info">
+          <div class="shop-card-name">${card.name}</div>
+          <div class="shop-card-desc">${card.desc}</div>
+          <div style="font-size: 0.8em; color: #f39c12;">💰 ${card.price}</div>
+        </div>
+        <button class="btn btn-sm btn-success" onclick="window.FarmGameApp.buyCard('${card.id}')">购买</button>
       </div>
-      <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-        ${this.gameState.shopCards.map(card => `
-          <div style="width: 100px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; border: 2px solid ${rarityColor[card.rarity]};">
-            <div style="font-size: 2em; margin-bottom: 5px;">${card.icon}</div>
-            <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">${card.name}</div>
-            <div style="font-size: 0.7em; color: #7f8c8d; margin-bottom: 5px;">${card.desc}</div>
-            <div style="font-size: 0.8em; color: #f39c12; margin-bottom: 8px;">💰 ${card.price}</div>
-            <button class="btn btn-sm btn-success" onclick="window.FarmGameApp.buyCard('${card.id}')" style="padding: 3px 8px; font-size: 0.8em;">购买</button>
-          </div>
-        `).join('')}
-      </div>
-    `;
+    `).join('');
+  }
+
+  // 更新UI
+  updateUI() {
+    // 更新统计数据
+    document.getElementById('energyCount').textContent = `${this.gameState.energy}/${this.gameState.maxEnergy}`;
+    document.getElementById('dayCount').textContent = this.gameState.day;
+    document.getElementById('moneyCount').textContent = this.gameState.money;
+    document.getElementById('levelCount').textContent = this.gameState.level;
+    document.getElementById('expCount').textContent = `${Math.round(this.gameState.exp / (this.gameState.level * 100) * 100)}%`;
+
+    // 更新资源
+    document.getElementById('wheatCount').textContent = this.gameState.resources.wheat;
+    document.getElementById('carrotCount').textContent = this.gameState.resources.carrot;
+    document.getElementById('potatoCount').textContent = this.gameState.resources.potato;
+    document.getElementById('tomatoCount').textContent = this.gameState.resources.tomato;
+    document.getElementById('chickenCount').textContent = this.gameState.resources.chicken;
+    document.getElementById('duckCount').textContent = this.gameState.resources.duck;
+    document.getElementById('sheepCount').textContent = this.gameState.resources.sheep;
+    document.getElementById('pigCount').textContent = this.gameState.resources.pig;
+    document.getElementById('eggCount').textContent = this.gameState.resources.egg;
+    document.getElementById('duckEggCount').textContent = this.gameState.resources.duckEgg;
+    document.getElementById('milkCount').textContent = this.gameState.resources.milk;
+    document.getElementById('woolCount').textContent = this.gameState.resources.wool;
+    document.getElementById('porkCount').textContent = this.gameState.resources.pork;
+    document.getElementById('appleCount').textContent = this.gameState.resources.apple;
+    document.getElementById('flourCount').textContent = this.gameState.resources.flour;
   }
   setupCanvas() {
     // 获取 Canvas 元素
@@ -695,21 +716,6 @@ class FarmGameEngine {
     this.checkCombos();
     this.saveGameState();
     this.showMessage(`🎉 合成了${combo.name}！`, '#f39c12');
-  }
-  updateUI() {
-    // 更新统计数据
-    document.getElementById('energyCount').textContent = `${this.gameState.energy}/${this.gameState.maxEnergy}`;
-    document.getElementById('dayCount').textContent = this.gameState.day;
-    document.getElementById('moneyCount').textContent = this.gameState.money;
-    document.getElementById('levelCount').textContent = this.gameState.level;
-    document.getElementById('expCount').textContent = `${Math.round(this.gameState.exp / (this.gameState.level * 100) * 100)}%`;
-
-    // 更新资源
-    document.getElementById('wheatCount').textContent = this.gameState.resources.wheat;
-    document.getElementById('carrotCount').textContent = this.gameState.resources.carrot;
-    document.getElementById('chickenCount').textContent = this.gameState.resources.chicken;
-    document.getElementById('eggCount').textContent = this.gameState.resources.egg;
-    document.getElementById('milkCount').textContent = this.gameState.resources.milk;
   }
   drawTestScreen() {
     this.drawGameScreen();
