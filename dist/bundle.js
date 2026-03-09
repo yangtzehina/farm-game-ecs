@@ -15,6 +15,15 @@ class FarmGameEngine {
     this.canvas = null;
     this.ctx = null;
 
+    // 经济系统数据
+    this.economy = {
+      dailyTarget: 0,
+      currentGold: 0,
+      currentStage: 1,
+      streakDays: 0,
+      lastUpdateDay: 0
+    };
+
     // 全量卡牌库（120张，仅展示部分核心卡）
     this.cardLibrary = [
     // 普通卡（48张）
@@ -436,6 +445,54 @@ class FarmGameEngine {
     this.showMessage(`✅ 购买了${card.name}！`, '#27ae60');
   }
 
+  // ==========================================
+  // 经济系统 - 金币目标
+  // ==========================================
+  // 计算每日目标金币：对数增长曲线
+  calculateDailyTarget(day) {
+    return Math.floor(100 + 150 * Math.log(day + 1));
+  }
+
+  // 更新金币目标进度
+  updateGoldTarget() {
+    if (this.economy.lastUpdateDay !== this.gameState.day) {
+      // 新的一天，计算新目标
+      this.economy.dailyTarget = this.calculateDailyTarget(this.gameState.day);
+      this.economy.currentGold = 0;
+      this.economy.currentStage = Math.ceil(this.gameState.day / 7);
+      this.economy.lastUpdateDay = this.gameState.day;
+    }
+
+    // 校验异常：单日获得超过目标3倍视为异常
+    const earnedToday = this.gameState.money - (this.economy.currentGold || 0);
+    if (earnedToday > this.economy.dailyTarget * 3) {
+      this.showMessage('⚠️ 检测到异常金币增长，已限制进度', '#e74c3c');
+      this.gameState.money = this.economy.currentGold + Math.floor(this.economy.dailyTarget * 0.1);
+    }
+    this.economy.currentGold = this.gameState.money;
+    const percent = Math.min(100, Math.floor(this.economy.currentGold / this.economy.dailyTarget * 100));
+
+    // 更新UI
+    document.getElementById('dailyTarget').textContent = this.economy.dailyTarget;
+    document.getElementById('currentGold').textContent = this.economy.currentGold;
+    document.getElementById('targetPercent').textContent = `${percent}%`;
+    document.getElementById('targetProgress').style.width = `${percent}%`;
+    document.getElementById('currentStage').textContent = this.economy.currentStage;
+    document.getElementById('streakDays').textContent = this.economy.streakDays;
+
+    // 检查是否完成每日目标
+    if (percent >= 100 && !this.economy.targetCompleted) {
+      this.economy.targetCompleted = true;
+      this.economy.streakDays += 1;
+      // 发放奖励：10%额外金币+免费刷新
+      const reward = Math.floor(this.economy.dailyTarget * 0.1);
+      this.gameState.money += reward;
+      this.gameState.freeRefreshUsed = false;
+      this.showMessage(`🎉 今日目标完成！获得${reward}金币奖励+免费刷新机会！`, '#27ae60');
+      this.saveGameState();
+    }
+  }
+
   // 更新手牌UI
   updateHandCardsUI() {
     const handArea = document.getElementById('handArea');
@@ -503,6 +560,9 @@ class FarmGameEngine {
     document.getElementById('porkCount').textContent = this.gameState.resources.pork;
     document.getElementById('appleCount').textContent = this.gameState.resources.apple;
     document.getElementById('flourCount').textContent = this.gameState.resources.flour;
+
+    // 更新金币目标
+    this.updateGoldTarget();
   }
   setupCanvas() {
     // 获取 Canvas 元素
@@ -1219,6 +1279,8 @@ class FarmGameEngine {
     // 刷新商店和手牌刷新次数
     this.refreshShop();
     this.gameState.freeRefreshUsed = false;
+    // 重置每日目标完成状态
+    this.economy.targetCompleted = false;
     this.updateUI();
     this.updateHandCardsUI();
     this.updateShopUI();

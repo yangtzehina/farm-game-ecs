@@ -1,0 +1,574 @@
+{
+  "CARD_001": {
+    "name": "小麦",
+    "prompt": "lovecraftian horror, corrupted wheat, fleshy spore clusters, pulsating tentacle-like stalks, oozing viscous slime, multiple tiny glowing eyes scattered along stems, translucent pale flesh, hyperdetailed, dark eerie lighting, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_001_wheat.png"
+  },
+  "CARD_002": {
+    "name": "白菜",
+    "prompt": "lovecraftian horror, mutated cabbage, fleshy translucent leaves oozing green slime, writhing tiny tentacles between layers, multiple small pulsating eyes on leaf edges, slimy texture, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_002_cabbage.png"
+  },
+  "CARD_003": {
+    "name": "胡萝卜",
+    "prompt": "lovecraftian horror, writhing carrot, tentacle-like roots, pulsating orange fleshy body, multiple black eyes along the length, oozing orange viscous slime, twitching fine root hairs, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_003_carrot.png"
+  },
+  "CARD_004": {
+    "name": "生菜",
+    "prompt": "lovecraftian horror, corrupted lettuce, slimy translucent purple-green leaves, writhing tiny tentacles on leaf surface, multiple glowing yellow eyes along stems, oozing iridescent slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_004_lettuce.png"
+  },
+  "CARD_005": {
+    "name": "菠菜",
+    "prompt": "lovecraftian horror, mutated spinach, dark fleshy leaves with pulsating veins, writhing tentacle stems, multiple tiny red eyes on leaf edges, oozing dark green slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_005_spinach.png"
+  },
+  "CARD_006": {
+    "name": "芹菜",
+    "prompt": "lovecraftian horror, corrupted celery, fleshy translucent stalks with pulsating green veins, tiny writhing tentacles between stalks, multiple small blue eyes along stalks, oozing clear viscous slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_006_celery.png"
+  },
+  "CARD_007": {
+    "name": "油菜",
+    "prompt": "lovecraftian horror, mutated rapeseed, fleshy yellow flower heads that open to reveal tiny teeth, writhing green stalks, multiple black eyes on flowers, oozing yellow nectar-like slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_007_rapeseed.png"
+  },
+  "CARD_008": {
+    "name": "韭菜",
+    "prompt": "lovecraftian horror, corrupted chives, writhing thin tentacle-like stalks, multiple tiny glowing purple eyes along stalks, oozing clear slime, pulsating, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_008_chives.png"
+  },
+  "CARD_009": {
+    "name": "土豆",
+    "prompt": "lovecraftian horror, mutated potato, fleshy lumpy bulb, multiple twitching root tentacles, dozens of small black eyes all over the surface, oozing white viscous starch slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_009_potato.png"
+  },
+  "CARD_010": {
+    "name": "番茄",
+    "prompt": "lovecraftian horror, corrupted tomato, pulsating fleshy red fruit, translucent skin showing internal writhing veins, multiple green eyes on the surface, oozing red viscous slime, tiny tentacles growing from the stem, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_010_tomato.png"
+  },
+  "CARD_011": {
+    "name": "茄子",
+    "prompt": "lovecraftian horror, mutated eggplant, dark purple fleshy body, pulsating black veins, multiple yellow eyes on the surface, oozing dark purple slime, writhing tentacle stem, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_011_eggplant.png"
+  },
+  "CARD_012": {
+    "name": "黄瓜",
+    "prompt": "lovecraftian horror, corrupted cucumber, long fleshy green body, pulsating translucent spines that are actually tiny tentacles, multiple small red eyes along the length, oozing clear slime, twitching slightly, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_012_cucumber.png"
+  },
+  "CARD_013": {
+    "name": "豆角",
+    "prompt": "lovecraftian horror, mutated green beans, long stringy tentacle-like pods, multiple tiny black eyes along each pod, oozing green slime, pods twitch and wiggle, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_013_beans.png"
+  },
+  "CARD_014": {
+    "name": "玉米",
+    "prompt": "lovecraftian horror, corrupted corn, fleshy yellow kernels that are actually tiny pulsating eyes, writhing silk tentacles from the top, green husk leaves lined with small teeth, oozing yellow slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_014_corn.png"
+  },
+  "CARD_015": {
+    "name": "南瓜",
+    "prompt": "lovecraftian horror, mutated pumpkin, large lumpy orange fleshy body, jagged mouth opening full of sharp teeth, multiple glowing orange eyes on the surface, writhing vine tentacles, oozing orange slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_015_pumpkin.png"
+  },
+  "CARD_016": {
+    "name": "冬瓜",
+    "prompt": "lovecraftian horror, corrupted winter melon, large pale fleshy body, fuzzy white mold-like growths that are actually tiny tentacles, multiple small blue eyes scattered on the surface, oozing clear viscous slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_016_winter_melon.png"
+  },
+  "CARD_017": {
+    "name": "丝瓜",
+    "prompt": "lovecraftian horror, mutated luffa, long green tentacle-like body, pulsating veins along the length, multiple tiny yellow eyes, oozing sticky slime, twitching slightly, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_017_luffa.png"
+  },
+  "CARD_018": {
+    "name": "苦瓜",
+    "prompt": "lovecraftian horror, corrupted bitter melon, bumpy dark green fleshy body, each bump has a tiny red eye, oozing bitter yellow slime, writhing tentacle stem, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_018_bitter_melon.png"
+  },
+  "CARD_019": {
+    "name": "红薯",
+    "prompt": "lovecraftian horror, mutated sweet potato, lumpy red fleshy bulb, multiple writhing root tentacles, dozens of small brown eyes all over the surface, oozing orange viscous slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_019_sweet_potato.png"
+  },
+  "CARD_020": {
+    "name": "山药",
+    "prompt": "lovecraftian horror, corrupted yam, long pale fleshy tentacle-like body, covered in tiny writhing hair-like tentacles, multiple small black eyes along the length, oozing clear sticky slime, pulsating, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_020_yam.png"
+  },
+  "CARD_021": {
+    "name": "小鸡",
+    "prompt": "lovecraftian horror, mutated chick, distorted fleshy body, dozens of bulging glowing yellow eyes all over, multiple twitching wings, beak full of sharp tiny teeth, oozing yellow slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_021_chick.png"
+  },
+  "CARD_022": {
+    "name": "兔子",
+    "prompt": "lovecraftian horror, corrupted rabbit, distorted fleshy body, multiple long tentacle ears, dozens of bulging red eyes, mouth full of sharp teeth, writhing fur that is actually tiny tentacles, oozing white slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_022_rabbit.png"
+  },
+  "CARD_023": {
+    "name": "小鸭",
+    "prompt": "lovecraftian horror, mutated duckling, distorted fleshy yellow body, multiple bulging orange eyes, beak full of sharp teeth, multiple twitching webbed feet, oozing yellow slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_023_duckling.png"
+  },
+  "CARD_024": {
+    "name": "小猪",
+    "prompt": "lovecraftian horror, corrupted piglet, distorted fleshy pink body, dozens of bulging black eyes, snout full of sharp teeth, multiple writhing tentacle legs, oozing pink slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_024_piglet.png"
+  },
+  "CARD_025": {
+    "name": "小羊",
+    "prompt": "lovecraftian horror, mutated lamb, distorted fleshy white body, wool that is actually writhing tiny tentacles, dozens of bulging yellow eyes, mouth full of sharp teeth, multiple twitching legs, oozing white slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_025_lamb.png"
+  },
+  "CARD_026": {
+    "name": "小鹅",
+    "prompt": "lovecraftian horror, corrupted gosling, distorted fleshy grey body, multiple bulging orange eyes, long beak full of sharp teeth, multiple twitching wings, oozing grey slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_026_gosling.png"
+  },
+  "CARD_027": {
+    "name": "小牛",
+    "prompt": "lovecraftian horror, mutated calf, distorted fleshy brown body, dozens of bulging black eyes, mouth full of sharp teeth, multiple writhing tentacle legs, oozing brown slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_027_calf.png"
+  },
+  "CARD_028": {
+    "name": "小马",
+    "prompt": "lovecraftian horror, corrupted foal, distorted fleshy brown body, dozens of bulging white eyes, mouth full of sharp teeth, multiple writhing tentacle legs, mane that is writhing tentacles, oozing brown slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_028_foal.png"
+  },
+  "CARD_029": {
+    "name": "小驴",
+    "prompt": "lovecraftian horror, mutated donkey foal, distorted fleshy grey body, dozens of bulging black eyes, mouth full of sharp teeth, multiple writhing tentacle legs, long tentacle ears, oozing grey slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_029_donkey_foal.png"
+  },
+  "CARD_030": {
+    "name": "小猫",
+    "prompt": "lovecraftian horror, corrupted kitten, distorted fleshy black body, dozens of bulging glowing green eyes, mouth full of sharp teeth, multiple writhing tentacle legs, fur that is tiny writhing tentacles, oozing black slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_030_kitten.png"
+  },
+  "CARD_031": {
+    "name": "水壶",
+    "prompt": "lovecraftian horror, corrupted watering can, fleshy metal body, spout that is a writhing tentacle, handle made of fused bone, multiple glowing red eyes on the side, oozing black corrosive slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_031_watering_can.png"
+  },
+  "CARD_032": {
+    "name": "镰刀",
+    "prompt": "lovecraftian horror, mutated sickle, blade made of pulsating organic flesh, sharp serrated edges dripping with black blood, handle wrapped in writhing tentacles, multiple glowing red eyes along the blade, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_032_sickle.png"
+  },
+  "CARD_033": {
+    "name": "锄头",
+    "prompt": "lovecraftian horror, corrupted hoe, blade made of jagged bone, handle made of fused writhing tentacles, multiple glowing yellow eyes on the blade, oozing green corrosive slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_033_hoe.png"
+  },
+  "CARD_034": {
+    "name": "普通肥料",
+    "prompt": "lovecraftian horror, corrupted fertilizer, pulsating mass of black organic sludge, bubbling with glowing green spores, multiple tiny eyes popping to the surface, oozing viscous slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_034_fertilizer.png"
+  },
+  "CARD_035": {
+    "name": "铲子",
+    "prompt": "lovecraftian horror, mutated shovel, blade made of rusted fleshy metal, sharp edges dripping with brown slime, handle made of writhing woody tentacles, multiple glowing brown eyes on the blade, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_035_shovel.png"
+  },
+  "CARD_036": {
+    "name": "剪子",
+    "prompt": "lovecraftian horror, corrupted shears, blades made of sharp organic bone, handles made of fused tentacles, multiple glowing blue eyes along the blades, dripping with red viscous slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_036_shears.png"
+  },
+  "CARD_037": {
+    "name": "篮子",
+    "prompt": "lovecraftian horror, mutated basket, woven from writhing vine tentacles, multiple tiny eyes along the weave, inside oozing sticky slime, pulsating slightly, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_037_basket.png"
+  },
+  "CARD_038": {
+    "name": "水桶",
+    "prompt": "lovecraftian horror, corrupted bucket, made of pulsating fleshy wood, inside filled with bubbling black slime, multiple glowing green eyes on the side, handle made of fused bone, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_038_bucket.png"
+  },
+  "CARD_039": {
+    "name": "小仓库",
+    "prompt": "lovecraftian horror, corrupted small warehouse, twisted organic building made of pulsating flesh and wood, door that is a gaping mouth full of teeth, multiple glowing orange eyes on the walls, oozing brown slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_039_warehouse.png"
+  },
+  "CARD_040": {
+    "name": "鸡舍",
+    "prompt": "lovecraftian horror, mutated chicken coop, twisted organic structure made of fleshy wood, openings full of twitching tentacles, multiple glowing yellow eyes on the walls, oozing yellow slime, sounds of distant clucking screams, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_040_chicken_coop.png"
+  },
+  "CARD_041": {
+    "name": "兔笼",
+    "prompt": "lovecraftian horror, corrupted rabbit hutch, twisted organic structure made of pulsating bone and wood, bars made of sharp tentacles, multiple glowing red eyes on the walls, oozing white slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_041_rabbit_hutch.png"
+  },
+  "CARD_042": {
+    "name": "小棚子",
+    "prompt": "lovecraftian horror, mutated shed, twisted organic building made of fleshy rotting wood, door that is a gaping mouth, multiple glowing blue eyes on the walls, oozing green mold slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_042_shed.png"
+  },
+  "CARD_043": {
+    "name": "水井",
+    "prompt": "lovecraftian horror, corrupted well, stone structure fused with pulsating flesh, opening revealing dark bubbling water with glowing eyes staring up, multiple green eyes on the stone walls, writhing tentacles peeking out of the water, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_043_well.png"
+  },
+  "CARD_044": {
+    "name": "小雨",
+    "prompt": "lovecraftian horror, corrupted light rain, dark viscous black raindrops falling, each drop contains a tiny glowing eye, oozing slime where they hit, twisted eerie green lighting, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_044_light_rain.png"
+  },
+  "CARD_045": {
+    "name": "小晴天",
+    "prompt": "lovecraftian horror, corrupted sunny day, sickly yellow sun with a gaping mouth and multiple eyes, pulsating yellow light, floating black spores in the air, eerie twisted lighting, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_045_sunny.png"
+  },
+  "CARD_046": {
+    "name": "小风",
+    "prompt": "lovecraftian horror, corrupted wind, swirling dark green mist with visible writhing tentacles, tiny glowing eyes swirling in the mist, carrying sharp bone fragments, eerie, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_046_wind.png"
+  },
+  "CARD_047": {
+    "name": "小丰收",
+    "prompt": "lovecraftian horror, corrupted harvest, swirling mass of mutated crops and flesh, glowing orange eyes mixed in, oozing various colored slimes, pulsating, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_047_harvest.png"
+  },
+  "CARD_048": {
+    "name": "露水",
+    "prompt": "lovecraftian horror, corrupted dew, large glistening translucent drops, each drop contains a tiny writhing tentacle and glowing eye, iridescent slime, eerie blue lighting, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_048_dew.png"
+  },
+  "CARD_049": {
+    "name": "草莓",
+    "prompt": "lovecraftian horror, corrupted strawberry, fleshy red body, each seed is a tiny bulging black eye, writhing green tentacle stems, oozing red viscous slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_049_strawberry.png"
+  },
+  "CARD_050": {
+    "name": "蓝莓",
+    "prompt": "lovecraftian horror, mutated blueberry, small dark blue fleshy orbs, each with a tiny glowing blue eye, clustered together on writhing tentacle stems, oozing dark blue slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_050_blueberry.png"
+  },
+  "CARD_051": {
+    "name": "树莓",
+    "prompt": "lovecraftian horror, corrupted raspberry, fleshy pink clustered orbs, each segment has a tiny red eye, writhing green tentacle stems, oozing pink slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_051_raspberry.png"
+  },
+  "CARD_052": {
+    "name": "橙子",
+    "prompt": "lovecraftian horror, mutated orange, round fleshy orange body, peel that opens to reveal tiny teeth, multiple glowing orange eyes on the surface, oozing orange acidic slime, writhing tentacle stem, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_052_orange.png"
+  },
+  "CARD_053": {
+    "name": "橘子",
+    "prompt": "lovecraftian horror, corrupted tangerine, small orange fleshy body, multiple tiny yellow eyes, peel oozing orange slime, segments inside are tiny writhing tentacles, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_053_tangerine.png"
+  },
+  "CARD_054": {
+    "name": "柚子",
+    "prompt": "lovecraftian horror, mutated pomelo, large pale yellow fleshy body, multiple large glowing yellow eyes, thick peel oozing clear slime, inside flesh is writhing tentacle segments, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_054_pomelo.png"
+  },
+  "CARD_055": {
+    "name": "西瓜",
+    "prompt": "lovecraftian horror, corrupted watermelon, large green striped fleshy body, multiple glowing red eyes on the rind, inside flesh is pulsating red with black seed eyes, oozing red slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_055_watermelon.png"
+  },
+  "CARD_056": {
+    "name": "哈密瓜",
+    "prompt": "lovecraftian horror, mutated cantaloupe, large yellow fleshy body with textured skin, multiple glowing orange eyes, inside flesh is writhing orange tentacles, oozing orange slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_056_cantaloupe.png"
+  },
+  "CARD_057": {
+    "name": "桃子",
+    "prompt": "lovecraftian horror, corrupted peach, fuzzy pink fleshy body, multiple glowing pink eyes, oozing pink sweet slime, inside flesh is pulsating with tiny tentacles, writhing stem, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_057_peach.png"
+  },
+  "CARD_058": {
+    "name": "李子",
+    "prompt": "lovecraftian horror, mutated plum, dark purple fleshy body, multiple glowing purple eyes, oozing dark purple slime, inside flesh is writhing tentacles, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_058_plum.png"
+  },
+  "CARD_059": {
+    "name": "杏子",
+    "prompt": "lovecraftian horror, corrupted apricot, orange fleshy body, multiple glowing orange eyes, oozing orange slime, pit inside is a large black eye, writhing stem, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_059_apricot.png"
+  },
+  "CARD_060": {
+    "name": "枣子",
+    "prompt": "lovecraftian horror, mutated jujube, red fleshy oval body, multiple tiny red eyes, wrinkled skin oozing red slime, inside flesh is pulsating, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_060_jujube.png"
+  },
+  "CARD_061": {
+    "name": "鸭",
+    "prompt": "lovecraftian horror, corrupted duck, distorted fleshy body, dozens of bulging orange eyes, beak full of sharp teeth, multiple writhing wings and legs, feathers are tiny tentacles, oozing yellow slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_061_duck.png"
+  },
+  "CARD_062": {
+    "name": "鹅",
+    "prompt": "lovecraftian horror, mutated goose, large distorted fleshy body, dozens of bulging orange eyes, long neck that is a writhing tentacle, beak full of sharp teeth, multiple wings, oozing grey slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_062_goose.png"
+  },
+  "CARD_063": {
+    "name": "猪",
+    "prompt": "lovecraftian horror, corrupted pig, large distorted fleshy pink body, dozens of bulging black eyes, snout full of sharp teeth, multiple writhing tentacle legs, oozing pink slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_063_pig.png"
+  },
+  "CARD_064": {
+    "name": "羊",
+    "prompt": "lovecraftian horror, mutated sheep, distorted fleshy body, wool that is writhing white tentacles, dozens of bulging yellow eyes, mouth full of sharp teeth, multiple legs, oozing white slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_064_sheep.png"
+  },
+  "CARD_065": {
+    "name": "牛",
+    "prompt": "lovecraftian horror, corrupted cow, large distorted fleshy brown body, dozens of bulging black eyes, mouth full of sharp teeth, multiple horns that are tentacles, multiple writhing legs, oozing brown slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_065_cow.png"
+  },
+  "CARD_066": {
+    "name": "马",
+    "prompt": "lovecraftian horror, mutated horse, large distorted fleshy brown body, dozens of bulging white eyes, mouth full of sharp teeth, mane that is writhing black tentacles, multiple legs, oozing brown slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_066_horse.png"
+  },
+  "CARD_067": {
+    "name": "鹿",
+    "prompt": "lovecraftian horror, corrupted deer, distorted fleshy brown body, antlers that are branching writhing tentacles, dozens of bulging black eyes, mouth full of sharp teeth, multiple legs, oozing brown slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_067_deer.png"
+  },
+  "CARD_068": {
+    "name": "羊驼",
+    "prompt": "lovecraftian horror, mutated alpaca, distorted fleshy white body, wool that is writhing tentacles, dozens of bulging black eyes, mouth full of sharp teeth, long neck that is a tentacle, oozing white slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_068_alpaca.png"
+  },
+  "CARD_069": {
+    "name": "鸽子",
+    "prompt": "lovecraftian horror, corrupted pigeon, distorted fleshy grey body, dozens of bulging red eyes, beak full of sharp teeth, multiple flapping wings, feathers are tiny tentacles, oozing grey slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_069_pigeon.png"
+  },
+  "CARD_070": {
+    "name": "小狗",
+    "prompt": "lovecraftian horror, mutated puppy, distorted fleshy brown body, dozens of bulging brown eyes, mouth full of sharp teeth, multiple writhing tentacle legs, fur that is tiny tentacles, oozing brown slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_070_puppy.png"
+  },
+  "CARD_071": {
+    "name": "高级肥料",
+    "prompt": "lovecraftian horror, corrupted premium fertilizer, pulsating mass of black organic sludge, bubbling with glowing purple spores, multiple larger eyes popping to the surface, oozing thicker viscous slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_071_premium_fertilizer.png"
+  },
+  "CARD_072": {
+    "name": "小型收割机",
+    "prompt": "lovecraftian horror, mutated small harvester, twisted organic machine made of pulsating metal and flesh, blades are sharp serrated tentacles, multiple glowing red eyes all over the body, oozing black oil slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_072_harvester.png"
+  },
+  "CARD_073": {
+    "name": "除草剂",
+    "prompt": "lovecraftian horror, corrupted herbicide, bottle made of pulsating fleshy glass, inside bubbling green corrosive acid that has eyes floating in it, multiple green eyes on the bottle, oozing acid slime that melts surfaces, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_073_herbicide.png"
+  },
+  "CARD_074": {
+    "name": "饲料",
+    "prompt": "lovecraftian horror, corrupted animal feed, pulsating mass of fleshy pellets, each pellet has a tiny eye, oozing brown nutrient slime, writhing tiny tentacles mixed in, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_074_feed.png"
+  },
+  "CARD_075": {
+    "name": "剪刀",
+    "prompt": "lovecraftian horror, mutated large shears, blades made of sharp pulsating organic metal, handles made of fused bone and tentacles, multiple glowing red eyes along the blades, dripping with red blood slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_075_shears_large.png"
+  },
+  "CARD_076": {
+    "name": "偷菜剪",
+    "prompt": "lovecraftian horror, corrupted stealing shears, dark twisted blades made of shadowy organic material, handles wrapped in writhing black tentacles, multiple glowing purple eyes, dripping with corrosive black slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_076_steal_shears.png"
+  },
+  "CARD_077": {
+    "name": "猪圈",
+    "prompt": "lovecraftian horror, mutated pigsty, twisted organic structure made of fleshy wood and mud, walls covered in oozing pink slime, multiple glowing black eyes on the walls, openings full of writhing tentacles, sounds of distorted oinking, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_077_pigsty.png"
+  },
+  "CARD_078": {
+    "name": "羊圈",
+    "prompt": "lovecraftian horror, corrupted sheep pen, twisted organic structure made of bone and wood fences, bars are writhing tentacles, multiple glowing yellow eyes on the walls, oozing white slime, sounds of distorted bleating, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_078_sheep_pen.png"
+  },
+  "CARD_079": {
+    "name": "中型仓库",
+    "prompt": "lovecraftian horror, corrupted medium warehouse, larger twisted organic building made of pulsating flesh and stone, large gaping mouth door full of teeth, multiple glowing orange eyes on the walls, oozing thicker brown slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_079_medium_warehouse.png"
+  },
+  "CARD_080": {
+    "name": "小温室",
+    "prompt": "lovecraftian horror, mutated small greenhouse, twisted organic structure with glass panes that are translucent flesh, inside filled with glowing mutated plants and tentacles, multiple green eyes on the frame, oozing green slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_080_greenhouse.png"
+  },
+  "CARD_081": {
+    "name": "晒谷场",
+    "prompt": "lovecraftian horror, corrupted threshing ground, pulsating fleshy stone ground, covered in mutated grain spores and tiny eyes, multiple glowing yellow eyes around the edges, oozing yellow grain slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_081_threshing_ground.png"
+  },
+  "CARD_082": {
+    "name": "中雨",
+    "prompt": "lovecraftian horror, corrupted medium rain, heavier dark viscous black raindrops, each drop has a larger glowing eye and tiny tentacle, oozing corrosive slime where they hit, twisted green lightning in the background, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_082_medium_rain.png"
+  },
+  "CARD_083": {
+    "name": "中丰收",
+    "prompt": "lovecraftian horror, corrupted medium harvest, larger swirling mass of mutated crops, flesh, and tentacles, more glowing orange eyes mixed in, oozing thicker slimes, pulsating with more energy, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_083_medium_harvest.png"
+  },
+  "CARD_084": {
+    "name": "冰雹",
+    "prompt": "lovecraftian horror, corrupted hail, sharp ice chunks that are actually crystalline flesh, each has a glowing blue eye inside, falling violently, oozing cold blue slime, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_084_hail.png"
+  },
+  "CARD_085": {
+    "name": "葡萄",
+    "prompt": "lovecraftian horror, corrupted grapes, clusters of purple fleshy orbs, each grape is a bulging purple eye, writhing tentacle vines, oozing purple wine-like slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_085_grapes.png"
+  },
+  "CARD_086": {
+    "name": "猕猴桃",
+    "prompt": "lovecraftian horror, mutated kiwi, brown fuzzy fleshy body, fuzz is tiny writhing tentacles, multiple tiny black eyes on the skin, inside green flesh with black seed eyes, oozing green slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_086_kiwi.png"
+  },
+  "CARD_087": {
+    "name": "芒果",
+    "prompt": "lovecraftian horror, corrupted mango, orange fleshy body, multiple glowing orange eyes on the skin, inside orange flesh that is writhing tentacles, large flat pit that is a black eye, oozing orange slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_087_mango.png"
+  },
+  "CARD_088": {
+    "name": "榴莲",
+    "prompt": "lovecraftian horror, mutated durian, large spiky fleshy body, each spike is a sharp tentacle, multiple glowing yellow eyes between spikes, oozing thick yellow pungent slime, inside flesh is segmented tentacles, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_088_durian.png"
+  },
+  "CARD_089": {
+    "name": "火龙果",
+    "prompt": "lovecraftian horror, corrupted dragon fruit, red fleshy body with green leafy tentacles growing out, multiple glowing black eyes on the skin, inside white flesh with black seed eyes, oozing clear slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_089_dragon_fruit.png"
+  },
+  "CARD_090": {
+    "name": "山竹",
+    "prompt": "lovecraftian horror, mutated mangosteen, dark purple thick rind, multiple glowing purple eyes on the rind, inside white fleshy segments that are tentacles, oozing clear sweet slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_090_mangosteen.png"
+  },
+  "CARD_091": {
+    "name": "菠萝",
+    "prompt": "lovecraftian horror, corrupted pineapple, spiky yellow fleshy body, each spike is a sharp tentacle, multiple glowing yellow eyes on the surface, crown leaves are writhing green tentacles, oozing yellow acidic slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_091_pineapple.png"
+  },
+  "CARD_092": {
+    "name": "荔枝",
+    "prompt": "lovecraftian horror, mutated lychee, red bumpy fleshy body, multiple tiny red eyes on the skin, inside translucent white flesh that is a writhing tentacle, large black pit that is an eye, oozing clear sweet slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_092_lychee.png"
+  },
+  "CARD_093": {
+    "name": "奶牛",
+    "prompt": "lovecraftian horror, corrupted dairy cow, large distorted fleshy black and white body, dozens of bulging pink eyes, udders that drip black blood instead of milk, mouth full of sharp teeth, multiple tentacle legs, oozing black slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_093_dairy_cow.png"
+  },
+  "CARD_094": {
+    "name": "鸵鸟",
+    "prompt": "lovecraftian horror, mutated ostrich, large distorted fleshy body, long neck that is a massive writhing tentacle, dozens of bulging black eyes, beak full of sharp teeth, multiple massive legs, oozing black slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_094_ostrich.png"
+  },
+  "CARD_095": {
+    "name": "孔雀",
+    "prompt": "lovecraftian horror, corrupted peacock, distorted fleshy body, tail feathers that are massive eye-covered tentacles, dozens of glowing blue eyes all over, beak full of sharp teeth, multiple wings, oozing blue slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_095_peacock.png"
+  },
+  "CARD_096": {
+    "name": "天鹅",
+    "prompt": "lovecraftian horror, mutated swan, distorted fleshy white body, long neck that is a writhing white tentacle, dozens of glowing red eyes, beak full of sharp teeth, wings made of tentacle feathers, oozing white slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_096_swan.png"
+  },
+  "CARD_097": {
+    "name": "狐狸",
+    "prompt": "lovecraftian horror, corrupted fox, distorted fleshy red body, multiple bushy tails that are writhing tentacles, dozens of glowing green eyes, mouth full of sharp teeth, multiple legs, oozing red slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_097_fox.png"
+  },
+  "CARD_098": {
+    "name": "老鹰",
+    "prompt": "lovecraftian horror, mutated eagle, large distorted fleshy brown body, sharp beak full of teeth, talons that are writhing tentacles, dozens of glowing yellow eyes, wings made of tentacle feathers, oozing brown slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_098_eagle.png"
+  },
+  "CARD_099": {
+    "name": "熊猫",
+    "prompt": "lovecraftian horror, corrupted panda, distorted fleshy black and white body, dozens of bulging black eyes, mouth full of sharp teeth, multiple tentacle legs, fur that is tiny writhing tentacles, oozing black and white slime, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_099_panda.png"
+  },
+  "CARD_100": {
+    "name": "魔法肥料",
+    "prompt": "lovecraftian horror, corrupted magic fertilizer, pulsating mass of iridescent organic sludge, bubbling with glowing rainbow spores, multiple large glowing eyes floating in it, oozing magical corrosive slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_100_magic_fertilizer.png"
+  },
+  "CARD_101": {
+    "name": "全自动收割机",
+    "prompt": "lovecraftian horror, mutated automatic harvester, massive twisted organic machine made of pulsating metal and flesh, giant rotating blades that are serrated tentacles, dozens of glowing red eyes all over, oozing black oil and blood slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_101_auto_harvester.png"
+  },
+  "CARD_102": {
+    "name": "魔法饲料",
+    "prompt": "lovecraftian horror, corrupted magic feed, pulsating iridescent pellets, each pellet has a glowing rainbow eye, oozing magical nutrient slime, writhing larger tentacles mixed in, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_102_magic_feed.png"
+  },
+  "CARD_103": {
+    "name": "燃烧弹",
+    "prompt": "lovecraftian horror, corrupted fire bomb, pulsating fleshy grenade, inside filled with bubbling orange fire that has eyes, multiple glowing red eyes on the casing, oozing flaming slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_103_fire_bomb.png"
+  },
+  "CARD_104": {
+    "name": "大型养殖场",
+    "prompt": "lovecraftian horror, corrupted large farm, massive twisted organic complex made of flesh, bone, and wood, multiple buildings with gaping mouth doors, dozens of glowing eyes all over, oozing various colored slimes, sounds of distorted animal screams, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_104_large_farm.png"
+  },
+  "CARD_105": {
+    "name": "加工厂",
+    "prompt": "lovecraftian horror, corrupted processing plant, massive twisted organic factory made of pulsating metal and flesh, conveyor belts that are writhing tentacles, dozens of glowing orange eyes all over, oozing brown processed slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_105_processing_plant.png"
+  },
+  "CARD_106": {
+    "name": "葡萄酒厂",
+    "prompt": "lovecraftian horror, corrupted winery, twisted organic building made of wood and stone fused with flesh, large vats filled with bubbling purple wine that has eyes floating in it, multiple purple eyes on the walls, oozing purple wine slime, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_106_winery.png"
+  },
+  "CARD_107": {
+    "name": "大丰收",
+    "prompt": "lovecraftian horror, corrupted great harvest, massive swirling vortex of mutated crops, flesh, tentacles, and eyes, dozens of glowing orange and purple eyes, oozing thick slimes of all colors, pulsating with immense energy, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_107_great_harvest.png"
+  },
+  "CARD_108": {
+    "name": "台风预警",
+    "prompt": "lovecraftian horror, corrupted typhoon, massive swirling dark vortex, filled with writhing tentacles and glowing red eyes, flying sharp debris, howling distorted voices, twisted dark lighting, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_108_typhoon.png"
+  },
+  "CARD_109": {
+    "name": "黄金小麦",
+    "prompt": "lovecraftian horror, legendary corrupted golden wheat, shimmering golden fleshy stalks, spore clusters that are glowing golden eyes, writhing golden tentacle stalks, oozing golden slime, immense power radiating, hyperdetailed, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_109_golden_wheat.png"
+  },
+  "CARD_110": {
+    "name": "仙果",
+    "prompt": "lovecraftian horror, legendary corrupted fairy fruit, shimmering iridescent fleshy fruit, dozens of large glowing rainbow eyes, oozing glowing magical slime, floating tentacles surrounding it, immense power radiating, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_110_fairy_fruit.png"
+  },
+  "CARD_111": {
+    "name": "生命之树",
+    "prompt": "lovecraftian horror, legendary corrupted tree of life, massive gnarled tree made of pulsating flesh, roots that are massive writhing tentacles, branches covered in glowing eyes of all colors, oozing glowing green life slime, immense power radiating, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_111_tree_of_life.png"
+  },
+  "CARD_112": {
+    "name": "黄金鸡",
+    "prompt": "lovecraftian horror, legendary corrupted golden chicken, shimmering golden fleshy body, dozens of large glowing golden eyes, beak full of sharp golden teeth, multiple golden tentacle wings, oozing golden slime, immense power radiating, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_112_golden_chicken.png"
+  },
+  "CARD_113": {
+    "name": "独角兽",
+    "prompt": "lovecraftian horror, legendary corrupted unicorn, massive distorted fleshy white body, horn that is a massive glowing tentacle spire, dozens of large glowing blue eyes, mouth full of sharp teeth, multiple tentacle legs, oozing glowing blue slime, immense power radiating, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_113_unicorn.png"
+  },
+  "CARD_114": {
+    "name": "龙",
+    "prompt": "lovecraftian horror, legendary corrupted dragon, massive scaled fleshy body, scales that are all glowing red eyes, multiple heads with gaping mouths full of sharp teeth, massive writhing tentacle wings, oozing black fire slime, immense power radiating, grotesque abomination, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_114_dragon.png"
+  },
+  "CARD_115": {
+    "name": "神话镰刀",
+    "prompt": "lovecraftian horror, legendary corrupted mythic sickle, massive blade made of pulsating dark energy, sharp edges dripping with reality-bending black slime, handle made of fused bone and tentacles, dozens of glowing purple eyes along the blade, immense power radiating, grotesque, transparent background, 100x140, card art style
