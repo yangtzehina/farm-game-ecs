@@ -11,6 +11,11 @@ export class FarmGameUIManager {
     constructor(engine) {
         this.uiRunning = false;
         this.uiInterval = null;
+        // 全局提示系统
+        this.toastQueue = [];
+        this.activeToast = null;
+        // 动画状态
+        this.activeAnimations = [];
         this.engine = engine;
         this.input = {};
         this.prompt = prompt();
@@ -24,7 +29,215 @@ export class FarmGameUIManager {
         this.bindKeyboardEvents();
         // 创建命令菜单
         this.createCommandMenu();
+        // 注册游戏事件监听
+        this.registerGameEventListeners();
         console.log(chalk.green('✅ UI初始化完成'));
+    }
+    // ==========================================
+    // 注册游戏事件监听
+    // ==========================================
+    registerGameEventListeners() {
+        // 任务完成事件
+        this.engine.on('quest:complete', (quest) => {
+            this.playQuestCompleteAnimation(quest);
+            this.showToast(`🎉 任务完成：${quest.title}`, 'success', 5000);
+        });
+        // 奖励获取事件
+        this.engine.on('reward:get', (reward) => {
+            this.playRewardGetAnimation(reward);
+            this.showToast(`🎁 获得奖励：${reward.amount}${reward.target}`, 'success', 3000);
+        });
+        // 建筑升级事件
+        this.engine.on('building:upgrade', (building, level) => {
+            this.playBuildingUpgradeAnimation(building, level);
+            this.showToast(`🏗️  建筑升级：${building.identity.name} 升到${level}级`, 'success', 4000);
+        });
+        // 农场变化事件
+        this.engine.on('farm:change', (change) => {
+            this.playFarmChangeAnimation(change);
+            this.showToast(`🌱 农场变化：${change.description}`, 'info', 2500);
+        });
+        // 事件触发事件
+        this.engine.on('event:trigger', (event) => {
+            this.playEventTriggerAnimation(event);
+            this.showToast(`⚠️  事件触发：${event.name}`, 'warning', 4000);
+        });
+        // 遗物获取事件
+        this.engine.on('relic:get', (relic) => {
+            this.playRelicGetAnimation(relic);
+            this.showToast(`🏆 获得遗物：${relic.name}`, 'success', 5000);
+        });
+    }
+    // ==========================================
+    // 全局提示系统
+    // ==========================================
+    /**
+     * 显示全局提示
+     */
+    showToast(message, type = 'info', duration = 3000) {
+        this.toastQueue.push({ message, type, duration });
+        this.processToastQueue();
+    }
+    /**
+     * 处理提示队列
+     */
+    processToastQueue() {
+        if (this.activeToast || this.toastQueue.length === 0)
+            return;
+        const toast = this.toastQueue.shift();
+        this.activeToast = {
+            ...toast,
+            startTime: Date.now()
+        };
+        // 自动移除提示
+        setTimeout(() => {
+            this.activeToast = null;
+            this.processToastQueue();
+        }, toast.duration);
+    }
+    /**
+     * 渲染当前提示
+     */
+    renderToast() {
+        if (!this.activeToast)
+            return;
+        const colorMap = {
+            success: chalk.green,
+            error: chalk.red,
+            info: chalk.blue,
+            warning: chalk.yellow
+        };
+        const color = colorMap[this.activeToast.type];
+        console.log(color(`\n💬 ${this.activeToast.message}`));
+    }
+    // ==========================================
+    // 动画实现
+    // ==========================================
+    /**
+     * 任务完成动画
+     */
+    playQuestCompleteAnimation(quest) {
+        const animationId = `quest-${quest.id}-${Date.now()}`;
+        this.activeAnimations.push({
+            id: animationId,
+            type: 'quest-complete',
+            data: quest,
+            startTime: Date.now(),
+            duration: 3000
+        });
+        // 播放动画效果
+        console.log(chalk.green('\n🎉🎉🎉 任务完成 🎉🎉🎉'));
+        console.log(chalk.green(`📜 ${quest.title}`));
+        console.log(chalk.green(`🎁 奖励：${quest.rewards.map((r) => `${r.amount}${r.target}`).join(', ')}`));
+        console.log(chalk.green('🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉\n'));
+        // 动画结束后自动移除
+        setTimeout(() => {
+            this.activeAnimations = this.activeAnimations.filter(a => a.id !== animationId);
+        }, 3000);
+    }
+    /**
+     * 奖励获取动画
+     */
+    playRewardGetAnimation(reward) {
+        const animationId = `reward-${Date.now()}`;
+        this.activeAnimations.push({
+            id: animationId,
+            type: 'reward-get',
+            data: reward,
+            startTime: Date.now(),
+            duration: 2000
+        });
+        const iconMap = {
+            '金币': '💰',
+            '木材': '🪵',
+            '石头': '🪨',
+            '作物': '🥬',
+            '动物': '🐔',
+            '经验': '✨',
+            '卡牌': '🎴',
+            '道具': '🎁'
+        };
+        const icon = iconMap[reward.target] || '🎁';
+        console.log(chalk.yellow(`\n${icon} +${reward.amount} ${reward.target}\n`));
+        setTimeout(() => {
+            this.activeAnimations = this.activeAnimations.filter(a => a.id !== animationId);
+        }, 2000);
+    }
+    /**
+     * 建筑升级动画
+     */
+    playBuildingUpgradeAnimation(building, level) {
+        const animationId = `building-${building.identity.uniqueId}-${Date.now()}`;
+        this.activeAnimations.push({
+            id: animationId,
+            type: 'building-upgrade',
+            data: { building, level },
+            startTime: Date.now(),
+            duration: 3500
+        });
+        console.log(chalk.cyan('\n🏗️  🏗️  🏗️  建筑升级 🏗️  🏗️  🏗️'));
+        console.log(chalk.cyan(`🏡 ${building.identity.name} 升到 Lv.${level}`));
+        console.log(chalk.cyan(`⚡ 效率提升：+${(building.production.productivity * 100).toFixed(0)}%\n`));
+        setTimeout(() => {
+            this.activeAnimations = this.activeAnimations.filter(a => a.id !== animationId);
+        }, 3500);
+    }
+    /**
+     * 农场变化动画
+     */
+    playFarmChangeAnimation(change) {
+        const animationId = `farm-${Date.now()}`;
+        this.activeAnimations.push({
+            id: animationId,
+            type: 'farm-change',
+            data: change,
+            startTime: Date.now(),
+            duration: 1500
+        });
+        console.log(chalk.green(`\n🌱 ${change.description}\n`));
+        setTimeout(() => {
+            this.activeAnimations = this.activeAnimations.filter(a => a.id !== animationId);
+        }, 1500);
+    }
+    /**
+     * 事件触发动画
+     */
+    playEventTriggerAnimation(event) {
+        const animationId = `event-${event.id}-${Date.now()}`;
+        this.activeAnimations.push({
+            id: animationId,
+            type: 'event-trigger',
+            data: event,
+            startTime: Date.now(),
+            duration: 4000
+        });
+        console.log(chalk.red('\n⚠️  ⚠️  ⚠️  事件触发 ⚠️  ⚠️  ⚠️'));
+        console.log(chalk.red(`📢 ${event.name}`));
+        console.log(chalk.red(`📝 ${event.description}`));
+        console.log(chalk.red(`⏰ 持续时间：${event.duration / 1000}秒\n`));
+        setTimeout(() => {
+            this.activeAnimations = this.activeAnimations.filter(a => a.id !== animationId);
+        }, 4000);
+    }
+    /**
+     * 遗物获取动画
+     */
+    playRelicGetAnimation(relic) {
+        const animationId = `relic-${relic.id}-${Date.now()}`;
+        this.activeAnimations.push({
+            id: animationId,
+            type: 'relic-get',
+            data: relic,
+            startTime: Date.now(),
+            duration: 5000
+        });
+        console.log(chalk.magenta('\n🏆 🏆 🏆 获得遗物 🏆 🏆 🏆'));
+        console.log(chalk.magenta(`✨ ${relic.name}`));
+        console.log(chalk.magenta(`📜 ${relic.description}`));
+        console.log(chalk.magenta(`💡 效果：${relic.effect}\n`));
+        setTimeout(() => {
+            this.activeAnimations = this.activeAnimations.filter(a => a.id !== animationId);
+        }, 5000);
     }
     // ==========================================
     // 绑定键盘事件
@@ -139,6 +352,8 @@ export class FarmGameUIManager {
         this.displaySystemInfo();
         // 显示菜单
         this.displayMenu();
+        // 显示全局提示
+        this.renderToast();
     }
     displayGameInfo() {
         const world = this.engine.findEntity(entity => entity.identity?.entityType === '世界');
@@ -465,75 +680,11 @@ export class FarmGameUIManager {
         // 实现升级操作处理
         this.displayStatus();
     }
-    handleKeyPress(str, key) {
-        switch (key?.name) {
-            case 'space':
-                this.engine.toggleGameState();
-                break;
-            case 'q':
-                this.quit();
-                break;
-            case 'r':
-                this.restart();
-                break;
-            case 't':
-                this.showStats();
-                break;
-            case 'h':
-                this.showHelp();
-                break;
-            case 's':
-                this.saveGame();
-                break;
-            case 'l':
-                this.loadGame();
-                break;
-            case 'u':
-                this.upgradeCards();
-                break;
-            default:
-                if (key?.ctrl && key?.name === 'c') {
-                    this.quit();
-                }
-                break;
-        }
-    }
-    // ==========================================
-    // 启动游戏循环
-    // ==========================================
-    startGameLoop() {
-        if (this.uiRunning)
-            return;
-        this.uiRunning = true;
-        this.uiInterval = setInterval(() => {
-            this.update();
-        }, 500);
-    }
-    stopGameLoop() {
-        if (!this.uiInterval)
-            return;
-        clearInterval(this.uiInterval);
-        this.uiInterval = null;
-        this.uiRunning = false;
-    }
     // ==========================================
     // 获取用户输入
     // ==========================================
     getUserInput(text) {
         return this.prompt(text);
-    }
-    // ==========================================
-    // 显示系统信息
-    // ==========================================
-    displaySystemInfo() {
-        const stats = this.engine.getStats();
-        console.log(chalk.cyan('⚡ 系统信息'));
-        console.log(chalk.gray('-'.repeat(80)));
-        console.log(`  ⚡ FPS: ${stats.fps}`);
-        console.log(`  📦 实体: ${stats.entities}`);
-        console.log(`  🔧 系统: ${stats.systems}`);
-        console.log(`  📝 组件: ${stats.totalComponents}`);
-        console.log(`  💾 内存: ${stats.memory} MB`);
     }
 }
 //# sourceMappingURL=ui.js.map

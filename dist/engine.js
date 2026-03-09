@@ -19,6 +19,8 @@ export class FarmGameEngine {
         this.fps = 60;
         this.frameTime = 1000 / 60; // 约16.67ms
         this.gameLoopId = null;
+        // 事件系统
+        this.eventListeners = {};
         this.systemManager = createDefaultSystems();
     }
     static getInstance() {
@@ -68,6 +70,26 @@ export class FarmGameEngine {
             this.gameLoopId = null;
         }
         console.log('🛑 游戏引擎停止');
+    }
+    // ==========================================
+    // 事件系统
+    // ==========================================
+    /**
+     * 注册事件监听
+     */
+    on(event, callback) {
+        if (!this.eventListeners[event]) {
+            this.eventListeners[event] = [];
+        }
+        this.eventListeners[event].push(callback);
+    }
+    /**
+     * 触发事件
+     */
+    emit(event, ...args) {
+        if (this.eventListeners[event]) {
+            this.eventListeners[event].forEach(callback => callback(...args));
+        }
     }
     currentLoop() {
         if (!this.running)

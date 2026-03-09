@@ -596,8 +596,8 @@ export class EnergyComponent {
 // 任务组件 - Quest Components
 // ==========================================
 
-export type QuestType = '主线' | '日常' | '周常' | '活动';
-export type QuestObjectiveType = '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | '完成任务';
+export type QuestType = '主线' | '日常' | '周常' | '活动' | '短期回合' | '中期阶段' | '长期通关';
+export type QuestObjectiveType = '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | '完成任务' | '卡牌满级' | '建筑满级' | '难度通关' | '组合技激活';
 
 export interface QuestObjective {
   id: string;
@@ -609,7 +609,7 @@ export interface QuestObjective {
 }
 
 export interface QuestReward {
-  type: '资源' | '卡牌' | '道具' | '经验' | '金币';
+  type: '资源' | '卡牌' | '道具' | '经验' | '金币' | '称号' | '头像框';
   target: string;
   amount: number;
 }
@@ -737,6 +737,364 @@ export class QuestComponent {
    */
   getActiveQuests(): Quest[] {
     return this.quests.filter(q => q.unlocked && !q.completed);
+  }
+}
+
+// ==========================================
+// 成就组件 - Achievement Components
+// ==========================================
+
+export type AchievementRarity = '普通' | '稀有' | '史诗' | '传说' | '隐藏';
+export type AchievementConditionType = 
+  '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | 
+  '完成任务' | '存活天数' | '获得成就' | '组合技激活' | '难度通关' |
+  '无失败通关' | '收集所有卡牌' | '卡牌满级' | '建筑满级';
+
+export interface AchievementCondition {
+  type: AchievementConditionType;
+  target: string;
+  requiredAmount: number;
+  currentAmount: number;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  rarity: AchievementRarity;
+  icon: string;
+  points: number; // 成就点数
+  hidden: boolean; // 是否是隐藏成就
+  conditions: AchievementCondition[];
+  unlocked: boolean;
+  unlockedAt?: number; // 解锁时间戳
+  rewards: Array<{
+    type: '资源' | '卡牌' | '道具' | '头像框' | '称号';
+    target: string;
+    amount: number;
+  }>;
+}
+
+/**
+ * AchievementComponent - 成就组件
+ * 玩家的成就列表和进度
+ */
+export class AchievementComponent {
+  public static readonly TYPE = 'achievement';
+  
+  public achievements: Achievement[] = [];
+  public totalPoints: number = 0;
+  public unlockedCount: number = 0;
+  public totalCount: number = 0;
+
+  constructor(config: Partial<AchievementComponent> = {}) {
+    Object.assign(this, config);
+    this.totalCount = this.achievements.length;
+  }
+  
+  /**
+   * 添加成就
+   */
+  addAchievement(achievement: Achievement): boolean {
+    if (this.achievements.find(a => a.id === achievement.id)) return false;
+    this.achievements.push(achievement);
+    this.totalCount = this.achievements.length;
+    return true;
+  }
+  
+  /**
+   * 更新成就进度
+   */
+  updateProgress(
+    conditionType: AchievementConditionType,
+    target: string,
+    amount: number = 1
+  ): Achievement[] {
+    const newlyUnlocked: Achievement[] = [];
+    
+    this.achievements.forEach(achievement => {
+      if (achievement.unlocked) return;
+      
+      achievement.conditions.forEach(condition => {
+        if (condition.type === conditionType && 
+            condition.target === target) {
+          condition.currentAmount = Math.min(
+            condition.requiredAmount,
+            condition.currentAmount + amount
+          );
+          
+          // 检查是否解锁
+          if (this.checkAchievementUnlocked(achievement)) {
+            achievement.unlocked = true;
+            achievement.unlockedAt = Date.now();
+            this.unlockedCount++;
+            this.totalPoints += achievement.points;
+            newlyUnlocked.push(achievement);
+            console.log(`🏆 成就解锁: [${achievement.rarity}] ${achievement.name}`);
+          }
+        }
+      });
+    });
+    
+    return newlyUnlocked;
+  }
+  
+  /**
+   * 检查成就是否解锁
+   */
+  private checkAchievementUnlocked(achievement: Achievement): boolean {
+    return achievement.conditions.every(c => c.currentAmount >= c.requiredAmount);
+  }
+  
+  /**
+   * 获取已解锁成就
+   */
+  getUnlockedAchievements(): Achievement[] {
+    return this.achievements.filter(a => a.unlocked);
+  }
+  
+  /**
+   * 获取未解锁成就（隐藏成就仅在解锁后显示）
+   */
+  getVisibleAchievements(): Achievement[] {
+    return this.achievements.filter(a => !a.hidden || a.unlocked);
+  }
+  
+  /**
+   * 获取成就完成率
+   */
+  getCompletionRate(): number {
+    return Math.round((this.unlockedCount / this.totalCount) * 100);
+  }
+}
+
+// ==========================================
+// 难度系统组件 - Difficulty Components
+// ==========================================
+
+export interface DifficultyLevelConfig {
+  level: number;
+  name: string;
+  description: string;
+  resourceMultiplier: number; // 资源获取倍数
+  productionMultiplier: number; // 生产效率倍数
+  enemyHealthMultiplier: number; // 敌人生命值倍数
+  enemyDamageMultiplier: number; // 敌人伤害倍数
+  rewardMultiplier: number; // 奖励倍数
+  unlockCondition: {
+    type: AchievementConditionType;
+    target: string;
+    amount: number;
+  };
+  unlocked: boolean;
+}
+
+/**
+ * DifficultyComponent - 难度组件
+ * 游戏的难度等级配置和当前难度
+ */
+export class DifficultyComponent {
+  public static readonly TYPE = 'difficulty';
+  
+  public currentLevel: number = 1;
+  public maxLevel: number = 20;
+  public levels: DifficultyLevelConfig[] = [];
+  public difficultyBonus: number = 0; // 当前难度额外加成
+
+  constructor(config: Partial<DifficultyComponent> = {}) {
+    Object.assign(this, config);
+    this.initializeDefaultLevels();
+  }
+  
+  /**
+   * 初始化默认20级难度配置
+   */
+  private initializeDefaultLevels(): void {
+    for (let i = 1; i <= 20; i++) {
+      const levelConfig: DifficultyLevelConfig = {
+        level: i,
+        name: this.getDifficultyName(i),
+        description: this.getDifficultyDescription(i),
+        resourceMultiplier: 1 - (i - 1) * 0.05, // 每级减少5%资源获取
+        productionMultiplier: 1 - (i - 1) * 0.03, // 每级减少3%生产效率
+        enemyHealthMultiplier: 1 + (i - 1) * 0.1, // 每级增加10%敌人生命
+        enemyDamageMultiplier: 1 + (i - 1) * 0.08, // 每级增加8%敌人伤害
+        rewardMultiplier: 1 + (i - 1) * 0.15, // 每级增加15%奖励
+        unlockCondition: i === 1 ? {
+          type: '达到等级',
+          target: '玩家',
+          amount: 1
+        } : {
+          type: '难度通关',
+          target: `${i - 1}`,
+          amount: 1
+        },
+        unlocked: i === 1
+      };
+      
+      this.levels.push(levelConfig);
+    }
+  }
+  
+  /**
+   * 获取难度名称
+   */
+  private getDifficultyName(level: number): string {
+    if (level <= 5) return '新手';
+    if (level <= 10) return '普通';
+    if (level <= 15) return '困难';
+    if (level <= 18) return '专家';
+    return '极限';
+  }
+  
+  /**
+   * 获取难度描述
+   */
+  private getDifficultyDescription(level: number): string {
+    const resourceReduction = (level - 1) * 5;
+    const enemyBuff = (level - 1) * 10;
+    const rewardBonus = (level - 1) * 15;
+    return `难度 ${level}: 资源获取-${resourceReduction}%，敌人属性+${enemyBuff}%，奖励+${rewardBonus}%`;
+  }
+  
+  /**
+   * 获取当前难度配置
+   */
+  getCurrentDifficulty(): DifficultyLevelConfig {
+    return this.levels.find(l => l.level === this.currentLevel) || this.levels[0];
+  }
+  
+  /**
+   * 提升难度
+   */
+  increaseLevel(): boolean {
+    if (this.currentLevel >= this.maxLevel) return false;
+    const nextLevel = this.levels.find(l => l.level === this.currentLevel + 1);
+    if (!nextLevel || !nextLevel.unlocked) return false;
+    
+    this.currentLevel++;
+    this.difficultyBonus = (this.currentLevel - 1) * 0.1;
+    console.log(`🔼 难度提升至 ${this.currentLevel} 级: ${nextLevel.name}`);
+    return true;
+  }
+  
+  /**
+   * 解锁难度等级
+   */
+  unlockLevel(level: number): boolean {
+    const levelConfig = this.levels.find(l => l.level === level);
+    if (!levelConfig || levelConfig.unlocked) return false;
+    
+    levelConfig.unlocked = true;
+    console.log(`🔓 难度解锁: ${level}级 ${levelConfig.name}`);
+    return true;
+  }
+  
+  /**
+   * 获取已解锁的难度列表
+   */
+  getUnlockedLevels(): DifficultyLevelConfig[] {
+    return this.levels.filter(l => l.unlocked);
+  }
+}
+
+// ==========================================
+// UI通知组件 - UI Notification Components
+// ==========================================
+
+export type NotificationType = '任务进度' | '任务完成' | '成就解锁' | '难度提升' | '奖励获得' | '系统提示';
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  icon?: string;
+  duration: number; // 显示时长，毫秒
+  createdAt: number;
+  read: boolean;
+  priority: number; // 优先级，越高越先显示
+  animation?: string; // 动画类型：fade-in, slide-up, bounce, etc.
+}
+
+/**
+ * NotificationComponent - 通知组件
+ * 管理游戏中的UI提示和通知
+ */
+export class NotificationComponent {
+  public static readonly TYPE = 'notification';
+  
+  public notifications: Notification[] = [];
+  public maxNotifications: number = 5; // 最大同时显示的通知数
+
+  constructor(config: Partial<NotificationComponent> = {}) {
+    Object.assign(this, config);
+  }
+  
+  /**
+   * 发送通知
+   */
+  sendNotification(
+    type: NotificationType,
+    title: string,
+    message: string,
+    options: Partial<Omit<Notification, 'id' | 'type' | 'title' | 'message' | 'createdAt'>> = {}
+  ): string {
+    const id = `notify_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const notification: Notification = {
+      id,
+      type,
+      title,
+      message,
+      duration: options.duration || 3000,
+      createdAt: Date.now(),
+      read: false,
+      priority: options.priority || 0,
+      icon: options.icon,
+      animation: options.animation || 'slide-up'
+    };
+    
+    // 插入并按优先级排序
+    this.notifications.push(notification);
+    this.notifications.sort((a, b) => b.priority - a.priority);
+    
+    // 超过最大数量时删除最旧的低优先级通知
+    if (this.notifications.length > this.maxNotifications) {
+      this.notifications = this.notifications.slice(0, this.maxNotifications);
+    }
+    
+    return id;
+  }
+  
+  /**
+   * 获取需要显示的通知
+   */
+  getActiveNotifications(): Notification[] {
+    const now = Date.now();
+    return this.notifications.filter(n => !n.read && now - n.createdAt < n.duration);
+  }
+  
+  /**
+   * 标记通知为已读
+   */
+  markAsRead(notificationId: string): boolean {
+    const notification = this.notifications.find(n => n.id === notificationId);
+    if (notification) {
+      notification.read = true;
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * 清理过期通知
+   */
+  cleanupExpired(): void {
+    const now = Date.now();
+    this.notifications = this.notifications.filter(n => 
+      !n.read && now - n.createdAt < n.duration
+    );
   }
 }
 
@@ -885,6 +1243,353 @@ export class ComboComponent {
 // 组件注册表 - Component Registry
 // ==========================================
 
+// ==========================================
+// 随机事件系统组件 - Random Event Components
+// ==========================================
+
+export type EventType = '正面' | '负面' | '中性' | '灾害';
+export type EventTrigger = '回合开始' | '回合结束' | '使用卡牌' | '收获资源' | '升级卡牌' | '随机';
+
+export interface EventEffect {
+  type: '资源变更' | '卡牌效果变更' | '生产效率变更' | '天气变更' | '获得卡牌' | '失去卡牌' | '获得遗物' | '触发其他事件';
+  target: string;
+  value: number | string | any;
+  duration?: number; // 持续回合数，undefined表示立即生效
+}
+
+export interface GameEvent {
+  id: string;
+  name: string;
+  description: string;
+  type: EventType;
+  trigger: EventTrigger;
+  weight: number; // 触发权重，数值越大越容易触发
+  levelRequirement: number; // 最低等级要求
+  effects: EventEffect[];
+  cooldown: number; // 触发后冷却回合数
+  duration?: number; // 事件持续回合数
+  active: boolean;
+  remainingDuration: number; // 剩余持续回合数
+}
+
+/**
+ * EventSystemComponent - 随机事件系统组件
+ * 管理所有事件的配置、触发和效果
+ */
+export class EventSystemComponent {
+  public static readonly TYPE = 'eventSystem';
+  
+  public eventConfig: GameEvent[] = []; // 所有事件配置
+  public activeEvents: GameEvent[] = []; // 当前激活的事件
+  public eventCooldowns: { [eventId: string]: number } = {}; // 事件冷却计数
+  public eventTriggerChance: number = 0.3; // 每回合基础触发概率30%
+
+  constructor(config: Partial<EventSystemComponent> = {}) {
+    Object.assign(this, config);
+  }
+
+  /**
+   * 注册新事件配置
+   */
+  registerEvent(event: GameEvent): void {
+    if (!this.eventConfig.find(e => e.id === event.id)) {
+      this.eventConfig.push(event);
+    }
+  }
+
+  /**
+   * 获取可触发的事件列表
+   */
+  getAvailableEvents(triggerType: EventTrigger, playerLevel: number): GameEvent[] {
+    return this.eventConfig.filter(event => 
+      event.trigger === triggerType && 
+      playerLevel >= event.levelRequirement && 
+      (!this.eventCooldowns[event.id] || this.eventCooldowns[event.id] <= 0)
+    );
+  }
+
+  /**
+   * 触发随机事件
+   */
+  triggerRandomEvent(triggerType: EventTrigger, playerLevel: number): GameEvent | null {
+    const availableEvents = this.getAvailableEvents(triggerType, playerLevel);
+    if (availableEvents.length === 0) return null;
+
+    // 按权重随机选择
+    const totalWeight = availableEvents.reduce((sum, e) => sum + e.weight, 0);
+    let random = Math.random() * totalWeight;
+    
+    for (const event of availableEvents) {
+      random -= event.weight;
+      if (random <= 0) {
+        // 激活事件
+        const activatedEvent = { ...event };
+        activatedEvent.active = true;
+        activatedEvent.remainingDuration = event.duration ?? 1;
+        this.activeEvents.push(activatedEvent);
+        
+        // 设置冷却
+        this.eventCooldowns[event.id] = event.cooldown;
+        
+        return activatedEvent;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * 更新事件状态，回合结束时调用
+   */
+  updateEvents(): void {
+    // 减少冷却
+    Object.keys(this.eventCooldowns).forEach(eventId => {
+      if (this.eventCooldowns[eventId] > 0) {
+        this.eventCooldowns[eventId]--;
+      }
+    });
+
+    // 更新激活事件的持续时间
+    this.activeEvents = this.activeEvents.filter(event => {
+      event.remainingDuration--;
+      return event.remainingDuration > 0;
+    });
+  }
+}
+
+// ==========================================
+// 遗物系统组件 - Relic Components
+// ==========================================
+
+export type RelicRarity = '普通' | '稀有' | '史诗' | '传说';
+export type RelicAcquisition = '事件奖励' | '任务奖励' | '商店购买' | '隐藏宝箱' | '成就奖励' | '动物繁殖';
+
+export interface RelicEffect {
+  type: '资源加成' | '生产加成' | '卡牌效果增强' | '事件概率调整' | '能量上限提升' | '手牌上限提升' | '特殊效果';
+  target: string;
+  value: number;
+  condition?: string; // 生效条件
+}
+
+export interface Relic {
+  id: string;
+  name: string;
+  description: string;
+  rarity: RelicRarity;
+  acquisition: RelicAcquisition[];
+  effects: RelicEffect[];
+  levelRequirement: number;
+  unique: boolean; // 是否唯一，只能拥有一个
+  active: boolean;
+  stackable: boolean; // 是否可叠加
+  stackCount: number; // 当前叠加层数
+}
+
+/**
+ * RelicComponent - 遗物组件
+ * 玩家拥有的遗物和效果
+ */
+export class RelicComponent {
+  public static readonly TYPE = 'relic';
+  
+  public relics: Relic[] = []; // 拥有的所有遗物
+  public relicConfig: Relic[] = []; // 所有遗物配置
+
+  constructor(config: Partial<RelicComponent> = {}) {
+    Object.assign(this, config);
+  }
+
+  /**
+   * 注册遗物配置
+   */
+  registerRelic(relic: Relic): void {
+    if (!this.relicConfig.find(r => r.id === relic.id)) {
+      this.relicConfig.push(relic);
+    }
+  }
+
+  /**
+   * 获得遗物
+   */
+  addRelic(relicId: string): boolean {
+    const relicConfig = this.relicConfig.find(r => r.id === relicId);
+    if (!relicConfig) return false;
+
+    // 检查是否唯一且已拥有
+    if (relicConfig.unique && this.relics.find(r => r.id === relicId)) {
+      return false;
+    }
+
+    // 检查是否可叠加
+    if (relicConfig.stackable) {
+      const existing = this.relics.find(r => r.id === relicId);
+      if (existing) {
+        existing.stackCount++;
+        return true;
+      }
+    }
+
+    // 添加新遗物
+    const newRelic = { ...relicConfig };
+    newRelic.active = true;
+    newRelic.stackCount = 1;
+    this.relics.push(newRelic);
+    
+    return true;
+  }
+
+  /**
+   * 移除遗物
+   */
+  removeRelic(relicId: string): boolean {
+    const index = this.relics.findIndex(r => r.id === relicId);
+    if (index !== -1) {
+      this.relics.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * 获取所有激活的遗物效果
+   */
+  getActiveEffects(): RelicEffect[] {
+    const effects: RelicEffect[] = [];
+    this.relics.filter(r => r.active).forEach(relic => {
+      relic.effects.forEach(effect => {
+        effects.push({
+          ...effect,
+          value: effect.value * relic.stackCount
+        });
+      });
+    });
+    return effects;
+  }
+
+  /**
+   * 按类型获取遗物效果总和
+   */
+  getEffectSum(type: string, target: string): number {
+    return this.getActiveEffects()
+      .filter(e => e.type === type && e.target === target)
+      .reduce((sum, e) => sum + e.value, 0);
+  }
+}
+
+// ==========================================
+// 意图提示系统组件 - Intent Preview Component
+// ==========================================
+
+export type IntentType = '灾害预警' | '价格波动' | '特殊事件' | '天气变化';
+
+export interface FutureIntent {
+  type: IntentType;
+  name: string;
+  description: string;
+  round: number; // 会在第几回合发生
+  severity: '低' | '中' | '高';
+}
+
+/**
+ * IntentPreviewComponent - 意图提示组件
+ * 提前显示未来会发生的事件
+ */
+export class IntentPreviewComponent {
+  public static readonly TYPE = 'intentPreview';
+  
+  public futureIntents: FutureIntent[] = []; // 未来的事件列表
+  public previewRounds: number = 2; // 提前显示多少回合的事件
+
+  constructor(config: Partial<IntentPreviewComponent> = {}) {
+    Object.assign(this, config);
+  }
+
+  /**
+   * 添加未来事件提示
+   */
+  addIntent(intent: FutureIntent): void {
+    this.futureIntents.push(intent);
+    // 按回合排序
+    this.futureIntents.sort((a, b) => a.round - b.round);
+  }
+
+  /**
+   * 获取当前需要显示的意图
+   */
+  getCurrentIntents(currentRound: number): FutureIntent[] {
+    return this.futureIntents.filter(intent => 
+      intent.round >= currentRound && 
+      intent.round <= currentRound + this.previewRounds
+    );
+  }
+
+  /**
+   * 回合结束时更新意图状态
+   */
+  updateIntents(currentRound: number): void {
+    // 移除已经发生的事件
+    this.futureIntents = this.futureIntents.filter(intent => intent.round > currentRound);
+  }
+}
+
+// ==========================================
+// 卡组管理扩展 - Deck Management Extension
+// ==========================================
+
+// 扩展DeckComponent，添加删除卡牌和升级卡牌功能
+declare module './components' {
+  interface DeckComponent {
+    removeCardFromLibrary(cardId: string): boolean;
+    upgradeCard(cardId: string): boolean;
+    getUpgradableCards(): any[];
+  }
+}
+
+DeckComponent.prototype.removeCardFromLibrary = function(cardId: string): boolean {
+  const index = this.library.findIndex(c => c.identity?.uniqueId === cardId);
+  if (index !== -1) {
+    this.library.splice(index, 1);
+    // 同时从抽牌堆和弃牌堆移除
+    this.drawPile = this.drawPile.filter(c => c.identity?.uniqueId !== cardId);
+    this.discardPile = this.discardPile.filter(c => c.identity?.uniqueId !== cardId);
+    return true;
+  }
+  return false;
+};
+
+DeckComponent.prototype.upgradeCard = function(cardId: string): boolean {
+  const card = this.library.find(c => c.identity?.uniqueId === cardId);
+  if (!card || !card.upgrade) return false;
+  
+  // 提升卡牌等级
+  card.identity.level = (card.identity.level || 1) + 1;
+  
+  // 应用升级效果
+  if (card.upgrade.currentUpgrades) {
+    card.upgrade.currentUpgrades.forEach(upgrade => {
+      upgrade.effects.forEach(effect => {
+        if (card[effect.property] !== undefined) {
+          if (typeof card[effect.property] === 'number') {
+            card[effect.property] += effect.value;
+          } else if (typeof card[effect.property] === 'object') {
+            Object.assign(card[effect.property], effect.value);
+          }
+        }
+      });
+    });
+  }
+  
+  return true;
+};
+
+DeckComponent.prototype.getUpgradableCards = function(): any[] {
+  return this.library.filter(card => 
+    card.upgrade && 
+    card.identity && 
+    card.identity.level < 10 // 最高等级10
+  );
+};
+
 export const COMPONENT_REGISTRY = {
   'identity': IdentityComponent,
   'position': PositionComponent,
@@ -907,7 +1612,13 @@ export const COMPONENT_REGISTRY = {
   'hand': HandComponent,
   'energy': EnergyComponent,
   'combo': ComboComponent,
-  'quest': QuestComponent
+  'quest': QuestComponent,
+  'achievement': AchievementComponent,
+  'difficulty': DifficultyComponent,
+  'notification': NotificationComponent,
+  'eventSystem': EventSystemComponent,
+  'relic': RelicComponent,
+  'intentPreview': IntentPreviewComponent
 };
 
 // ==========================================
@@ -1016,7 +1727,10 @@ export class EntityFactory {
       'hand': new HandComponent(config.hand),
       'energy': new EnergyComponent(config.energy),
       'quest': new QuestComponent(config.quest),
-      'combo': new ComboComponent(config.combo)
+      'combo': new ComboComponent(config.combo),
+      'achievement': new AchievementComponent(config.achievement),
+      'difficulty': new DifficultyComponent(config.difficulty),
+      'notification': new NotificationComponent(config.notification)
     };
     
     return entity;

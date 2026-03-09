@@ -72,6 +72,7 @@ export declare class ResourceComponent {
     maxStorage: {
         [key: string]: number;
     };
+    constructor(config?: Partial<ResourceComponent>);
     addResource(type: string, amount: number): boolean;
     removeResource(type: string, amount: number): boolean;
 }
@@ -87,6 +88,7 @@ export declare class ProductionComponent {
     efficiency: number;
     quality: number;
     automation: boolean;
+    constructor(config?: Partial<ProductionComponent>);
     calculateProduction(baseAmount: number, efficiency: number, quality: number): number;
 }
 /**
@@ -113,6 +115,7 @@ export declare class CropComponent {
     yield: number;
     quality: number;
     fertilityBonus: number;
+    constructor(config?: Partial<CropComponent>);
     calculateYield(): number;
 }
 /**
@@ -127,6 +130,7 @@ export declare class AnimalComponent {
     age: number;
     maxAge: number;
     health: number;
+    constructor(config?: Partial<AnimalComponent>);
     getProductionBonus(): number;
 }
 /**
@@ -139,6 +143,7 @@ export declare class ToolComponent {
     durability: number;
     maxDurability: number;
     toolType: '收获' | '耕作' | '建造' | '战斗';
+    constructor(config?: Partial<ToolComponent>);
     use(): boolean;
     repair(amount: number): boolean;
 }
@@ -153,6 +158,7 @@ export declare class BuildingComponent {
     maxWorkers: number;
     productivity: number;
     maintenanceCost: number;
+    constructor(config?: Partial<BuildingComponent>);
     calculateProductionBonus(): number;
 }
 /**
@@ -171,6 +177,7 @@ export declare class CharacterComponent {
     experience: number;
     level: number;
     job: string;
+    constructor(config?: Partial<CharacterComponent>);
     addExperience(amount: number): boolean;
 }
 /**
@@ -194,6 +201,7 @@ export declare class UpgradeTreeComponent {
             value: number;
         }>;
     }>;
+    constructor(config?: Partial<UpgradeTreeComponent>);
     getAvailableUpgrades(currentLevel: number): any[];
 }
 /**
@@ -214,6 +222,7 @@ export declare class UpgradeComponent {
     upgradeCost: {
         [key: string]: number;
     };
+    constructor(config?: Partial<UpgradeComponent>);
     canUpgrade(upgradeCost: {
         [key: string]: number;
     }, currentResources: {
@@ -233,6 +242,7 @@ export declare class CombatComponent {
     criticalChance: number;
     criticalMultiplier: number;
     attackPattern: '近战' | '远程' | '范围';
+    constructor(config?: Partial<CombatComponent>);
     calculateDamage(): number;
 }
 /**
@@ -250,6 +260,7 @@ export declare class EffectComponent {
         stacking: number;
         source: string;
     }>;
+    constructor(config?: Partial<EffectComponent>);
     addEffect(name: string, type: 'buff' | 'debuff', duration: number, strength: number, source: string): void;
     removeEffect(name: string, source?: string): void;
     updateEffects(dt: number): void;
@@ -263,6 +274,7 @@ export declare class DeckComponent {
     library: any[];
     drawPile: any[];
     discardPile: any[];
+    constructor(config?: Partial<DeckComponent>);
     shuffleDrawPile(): void;
     drawCard(): any | null;
     discardCard(card: any): void;
@@ -275,6 +287,7 @@ export declare class HandComponent {
     static readonly TYPE = "hand";
     cards: any[];
     maxHandSize: number;
+    constructor(config?: Partial<HandComponent>);
     addCard(card: any): boolean;
     removeCard(cardId: string): any | null;
 }
@@ -287,11 +300,12 @@ export declare class EnergyComponent {
     current: number;
     max: number;
     regenPerTurn: number;
+    constructor(config?: Partial<EnergyComponent>);
     spend(amount: number): boolean;
     regen(): void;
 }
-export type QuestType = '主线' | '日常' | '周常' | '活动';
-export type QuestObjectiveType = '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | '完成任务';
+export type QuestType = '主线' | '日常' | '周常' | '活动' | '短期回合' | '中期阶段' | '长期通关';
+export type QuestObjectiveType = '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | '完成任务' | '卡牌满级' | '建筑满级' | '难度通关' | '组合技激活';
 export interface QuestObjective {
     id: string;
     type: QuestObjectiveType;
@@ -301,7 +315,7 @@ export interface QuestObjective {
     completed: boolean;
 }
 export interface QuestReward {
-    type: '资源' | '卡牌' | '道具' | '经验' | '金币';
+    type: '资源' | '卡牌' | '道具' | '经验' | '金币' | '称号' | '头像框';
     target: string;
     amount: number;
 }
@@ -333,6 +347,7 @@ export declare class QuestComponent {
     completedQuests: string[];
     dailyResetTime: number;
     lastDailyReset: number;
+    constructor(config?: Partial<QuestComponent>);
     /**
      * 添加新任务
      */
@@ -362,6 +377,162 @@ export declare class QuestComponent {
      */
     getActiveQuests(): Quest[];
 }
+export type AchievementRarity = '普通' | '稀有' | '史诗' | '传说' | '隐藏';
+export type AchievementConditionType = '收集资源' | '升级卡牌' | '生产物品' | '拥有卡牌' | '达到等级' | '完成任务' | '存活天数' | '获得成就' | '组合技激活' | '难度通关' | '无失败通关' | '收集所有卡牌' | '卡牌满级' | '建筑满级';
+export interface AchievementCondition {
+    type: AchievementConditionType;
+    target: string;
+    requiredAmount: number;
+    currentAmount: number;
+}
+export interface Achievement {
+    id: string;
+    name: string;
+    description: string;
+    rarity: AchievementRarity;
+    icon: string;
+    points: number;
+    hidden: boolean;
+    conditions: AchievementCondition[];
+    unlocked: boolean;
+    unlockedAt?: number;
+    rewards: Array<{
+        type: '资源' | '卡牌' | '道具' | '头像框' | '称号';
+        target: string;
+        amount: number;
+    }>;
+}
+/**
+ * AchievementComponent - 成就组件
+ * 玩家的成就列表和进度
+ */
+export declare class AchievementComponent {
+    static readonly TYPE = "achievement";
+    achievements: Achievement[];
+    totalPoints: number;
+    unlockedCount: number;
+    totalCount: number;
+    constructor(config?: Partial<AchievementComponent>);
+    /**
+     * 添加成就
+     */
+    addAchievement(achievement: Achievement): boolean;
+    /**
+     * 更新成就进度
+     */
+    updateProgress(conditionType: AchievementConditionType, target: string, amount?: number): Achievement[];
+    /**
+     * 检查成就是否解锁
+     */
+    private checkAchievementUnlocked;
+    /**
+     * 获取已解锁成就
+     */
+    getUnlockedAchievements(): Achievement[];
+    /**
+     * 获取未解锁成就（隐藏成就仅在解锁后显示）
+     */
+    getVisibleAchievements(): Achievement[];
+    /**
+     * 获取成就完成率
+     */
+    getCompletionRate(): number;
+}
+export interface DifficultyLevelConfig {
+    level: number;
+    name: string;
+    description: string;
+    resourceMultiplier: number;
+    productionMultiplier: number;
+    enemyHealthMultiplier: number;
+    enemyDamageMultiplier: number;
+    rewardMultiplier: number;
+    unlockCondition: {
+        type: AchievementConditionType;
+        target: string;
+        amount: number;
+    };
+    unlocked: boolean;
+}
+/**
+ * DifficultyComponent - 难度组件
+ * 游戏的难度等级配置和当前难度
+ */
+export declare class DifficultyComponent {
+    static readonly TYPE = "difficulty";
+    currentLevel: number;
+    maxLevel: number;
+    levels: DifficultyLevelConfig[];
+    difficultyBonus: number;
+    constructor(config?: Partial<DifficultyComponent>);
+    /**
+     * 初始化默认20级难度配置
+     */
+    private initializeDefaultLevels;
+    /**
+     * 获取难度名称
+     */
+    private getDifficultyName;
+    /**
+     * 获取难度描述
+     */
+    private getDifficultyDescription;
+    /**
+     * 获取当前难度配置
+     */
+    getCurrentDifficulty(): DifficultyLevelConfig;
+    /**
+     * 提升难度
+     */
+    increaseLevel(): boolean;
+    /**
+     * 解锁难度等级
+     */
+    unlockLevel(level: number): boolean;
+    /**
+     * 获取已解锁的难度列表
+     */
+    getUnlockedLevels(): DifficultyLevelConfig[];
+}
+export type NotificationType = '任务进度' | '任务完成' | '成就解锁' | '难度提升' | '奖励获得' | '系统提示';
+export interface Notification {
+    id: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    icon?: string;
+    duration: number;
+    createdAt: number;
+    read: boolean;
+    priority: number;
+    animation?: string;
+}
+/**
+ * NotificationComponent - 通知组件
+ * 管理游戏中的UI提示和通知
+ */
+export declare class NotificationComponent {
+    static readonly TYPE = "notification";
+    notifications: Notification[];
+    maxNotifications: number;
+    constructor(config?: Partial<NotificationComponent>);
+    /**
+     * 发送通知
+     */
+    sendNotification(type: NotificationType, title: string, message: string, options?: Partial<Omit<Notification, 'id' | 'type' | 'title' | 'message' | 'createdAt'>>): string;
+    /**
+     * 获取需要显示的通知
+     */
+    getActiveNotifications(): Notification[];
+    /**
+     * 标记通知为已读
+     */
+    markAsRead(notificationId: string): boolean;
+    /**
+     * 清理过期通知
+     */
+    cleanupExpired(): void;
+}
 /**
  * WorldComponent - 世界状态组件
  */
@@ -380,6 +551,7 @@ export declare class WorldComponent {
         }>;
         active: boolean;
     }>;
+    constructor(config?: Partial<WorldComponent>);
     getWeatherEffect(): number;
 }
 /**
@@ -393,6 +565,7 @@ export declare class GameStateComponent {
     streak: number;
     highScore: number;
     playTime: number;
+    constructor(config?: Partial<GameStateComponent>);
     increaseCombo(): void;
     resetCombo(): void;
 }
@@ -412,6 +585,7 @@ export declare class ComboComponent {
         strength: number;
         active: boolean;
     }>;
+    constructor(config?: Partial<ComboComponent>);
     activateCombo(id: string, name: string, description: string, effect: string, strength: number, duration?: number): boolean;
     deactivateCombo(id: string): boolean;
     isComboActive(id: string): boolean;
@@ -426,6 +600,146 @@ export declare class ComboComponent {
         active: boolean;
     }[];
     update(dt: number): void;
+}
+export type EventType = '正面' | '负面' | '中性' | '灾害';
+export type EventTrigger = '回合开始' | '回合结束' | '使用卡牌' | '收获资源' | '升级卡牌' | '随机';
+export interface EventEffect {
+    type: '资源变更' | '卡牌效果变更' | '生产效率变更' | '天气变更' | '获得卡牌' | '失去卡牌' | '获得遗物' | '触发其他事件';
+    target: string;
+    value: number | string | any;
+    duration?: number;
+}
+export interface GameEvent {
+    id: string;
+    name: string;
+    description: string;
+    type: EventType;
+    trigger: EventTrigger;
+    weight: number;
+    levelRequirement: number;
+    effects: EventEffect[];
+    cooldown: number;
+    duration?: number;
+    active: boolean;
+    remainingDuration: number;
+}
+/**
+ * EventSystemComponent - 随机事件系统组件
+ * 管理所有事件的配置、触发和效果
+ */
+export declare class EventSystemComponent {
+    static readonly TYPE = "eventSystem";
+    eventConfig: GameEvent[];
+    activeEvents: GameEvent[];
+    eventCooldowns: {
+        [eventId: string]: number;
+    };
+    eventTriggerChance: number;
+    constructor(config?: Partial<EventSystemComponent>);
+    /**
+     * 注册新事件配置
+     */
+    registerEvent(event: GameEvent): void;
+    /**
+     * 获取可触发的事件列表
+     */
+    getAvailableEvents(triggerType: EventTrigger, playerLevel: number): GameEvent[];
+    /**
+     * 触发随机事件
+     */
+    triggerRandomEvent(triggerType: EventTrigger, playerLevel: number): GameEvent | null;
+    /**
+     * 更新事件状态，回合结束时调用
+     */
+    updateEvents(): void;
+}
+export type RelicRarity = '普通' | '稀有' | '史诗' | '传说';
+export type RelicAcquisition = '事件奖励' | '任务奖励' | '商店购买' | '隐藏宝箱' | '成就奖励' | '动物繁殖';
+export interface RelicEffect {
+    type: '资源加成' | '生产加成' | '卡牌效果增强' | '事件概率调整' | '能量上限提升' | '手牌上限提升' | '特殊效果';
+    target: string;
+    value: number;
+    condition?: string;
+}
+export interface Relic {
+    id: string;
+    name: string;
+    description: string;
+    rarity: RelicRarity;
+    acquisition: RelicAcquisition[];
+    effects: RelicEffect[];
+    levelRequirement: number;
+    unique: boolean;
+    active: boolean;
+    stackable: boolean;
+    stackCount: number;
+}
+/**
+ * RelicComponent - 遗物组件
+ * 玩家拥有的遗物和效果
+ */
+export declare class RelicComponent {
+    static readonly TYPE = "relic";
+    relics: Relic[];
+    relicConfig: Relic[];
+    constructor(config?: Partial<RelicComponent>);
+    /**
+     * 注册遗物配置
+     */
+    registerRelic(relic: Relic): void;
+    /**
+     * 获得遗物
+     */
+    addRelic(relicId: string): boolean;
+    /**
+     * 移除遗物
+     */
+    removeRelic(relicId: string): boolean;
+    /**
+     * 获取所有激活的遗物效果
+     */
+    getActiveEffects(): RelicEffect[];
+    /**
+     * 按类型获取遗物效果总和
+     */
+    getEffectSum(type: string, target: string): number;
+}
+export type IntentType = '灾害预警' | '价格波动' | '特殊事件' | '天气变化';
+export interface FutureIntent {
+    type: IntentType;
+    name: string;
+    description: string;
+    round: number;
+    severity: '低' | '中' | '高';
+}
+/**
+ * IntentPreviewComponent - 意图提示组件
+ * 提前显示未来会发生的事件
+ */
+export declare class IntentPreviewComponent {
+    static readonly TYPE = "intentPreview";
+    futureIntents: FutureIntent[];
+    previewRounds: number;
+    constructor(config?: Partial<IntentPreviewComponent>);
+    /**
+     * 添加未来事件提示
+     */
+    addIntent(intent: FutureIntent): void;
+    /**
+     * 获取当前需要显示的意图
+     */
+    getCurrentIntents(currentRound: number): FutureIntent[];
+    /**
+     * 回合结束时更新意图状态
+     */
+    updateIntents(currentRound: number): void;
+}
+declare module './components' {
+    interface DeckComponent {
+        removeCardFromLibrary(cardId: string): boolean;
+        upgradeCard(cardId: string): boolean;
+        getUpgradableCards(): any[];
+    }
 }
 export declare const COMPONENT_REGISTRY: {
     identity: typeof IdentityComponent;
@@ -450,6 +764,12 @@ export declare const COMPONENT_REGISTRY: {
     energy: typeof EnergyComponent;
     combo: typeof ComboComponent;
     quest: typeof QuestComponent;
+    achievement: typeof AchievementComponent;
+    difficulty: typeof DifficultyComponent;
+    notification: typeof NotificationComponent;
+    eventSystem: typeof EventSystemComponent;
+    relic: typeof RelicComponent;
+    intentPreview: typeof IntentPreviewComponent;
 };
 export declare class EntityFactory {
     static createCardEntity(type: '作物' | '动物' | '工具' | '建筑' | '人物', config?: any): any;

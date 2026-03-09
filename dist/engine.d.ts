@@ -17,11 +17,20 @@ export declare class FarmGameEngine {
     private fps;
     private frameTime;
     private gameLoopId;
+    private eventListeners;
     private constructor();
     static getInstance(): FarmGameEngine;
     initialize(): void;
     start(): void;
     stop(): void;
+    /**
+     * 注册事件监听
+     */
+    on(event: string, callback: (...args: any[]) => void): void;
+    /**
+     * 触发事件
+     */
+    emit(event: string, ...args: any[]): void;
     private currentLoop;
     private update;
     addEntity(entity: any): void;
