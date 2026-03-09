@@ -306,6 +306,16 @@
             </div>
         </div>
         
+        <!-- 新增控制按钮 -->
+        <div class="controls" style="margin-top: 10px;">
+            <button class="btn btn-primary" onclick="window.FarmGameApp.showTaskPanel()">📋 任务</button>
+            <button class="btn btn-primary" onclick="window.FarmGameApp.showAchievementsPage()">🏆 成就</button>
+            <button class="btn btn-primary" onclick="window.FarmGameApp.showRelicsPage()">🏺 遗物</button>
+            <button class="btn btn-primary" onclick="window.FarmGameApp.showDifficultySelect()">⚔️ 难度选择</button>
+            <button class="btn btn-warning" onclick="window.FarmGameApp.showCardUpgrade()">⬆️ 升级卡牌</button>
+            <button class="btn btn-danger" onclick="window.FarmGameApp.showDeckManage()">🗑️ 管理卡组</button>
+        </div>
+
         <div class="footer">
             <p>🏡 农庄卡牌：田园物语 | ECS架构的肉鸽种地游戏</p>
             <p>Created with ❤️ using Node.js and TypeScript</p>
@@ -315,6 +325,186 @@
             </p>
         </div>
     </div>
+
+    <!-- 事件弹窗 -->
+    <div id="eventModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; animation: modalSlideIn 0.3s ease;">
+            <div style="font-size: 2em; margin-bottom: 10px;" id="eventIcon">⚠️</div>
+            <h2 id="eventTitle" style="margin: 0 0 15px 0; color: #e74c3c;">事件触发</h2>
+            <p id="eventDescription" style="font-size: 1.1em; line-height: 1.6; color: #34495e; margin-bottom: 20px;"></p>
+            <div id="eventOptions" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;"></div>
+        </div>
+    </div>
+
+    <!-- 遗物展示弹窗 -->
+    <div id="relicModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; animation: relicUnlock 0.8s ease;">
+            <div style="font-size: 4em; margin-bottom: 15px; animation: relicFloat 2s infinite ease-in-out;" id="relicIcon">🏺</div>
+            <h2 style="margin: 0 0 10px 0; color: #9b59b6;">🎉 获得遗物</h2>
+            <h3 id="relicName" style="margin: 0 0 15px 0; color: #2c3e50;"></h3>
+            <p id="relicDescription" style="font-size: 1.1em; line-height: 1.6; color: #34495e; margin-bottom: 10px;"></p>
+            <p id="relicEffect" style="font-weight: bold; color: #27ae60; margin-bottom: 25px;"></p>
+            <button class="btn btn-primary" onclick="window.FarmGameApp.closeRelicModal()">确定</button>
+        </div>
+    </div>
+
+    <!-- 任务面板 -->
+    <div id="taskPanel" style="display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 15px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; animation: slideInRight 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #3498db;">📋 任务面板</h2>
+                <button class="btn btn-danger" style="padding: 5px 10px;" onclick="window.FarmGameApp.closeTaskPanel()">×</button>
+            </div>
+            <div id="taskList" style="display: flex; flex-direction: column; gap: 15px;"></div>
+        </div>
+    </div>
+
+    <!-- 成就页面 -->
+    <div id="achievementsPage" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 15px; padding: 30px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; animation: fadeInScale 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #f39c12;">🏆 成就系统</h2>
+                <button class="btn btn-danger" style="padding: 5px 10px;" onclick="window.FarmGameApp.closeAchievementsPage()">×</button>
+            </div>
+            <div id="achievementsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;"></div>
+        </div>
+    </div>
+
+    <!-- 难度选择页面 -->
+    <div id="difficultySelect" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 15px; padding: 30px; max-width: 600px; width: 90%; animation: fadeInScale 0.3s ease;">
+            <h2 style="margin: 0 0 25px 0; color: #e74c3c; text-align: center;">⚔️ 选择游戏难度</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                <div class="difficulty-option" data-difficulty="easy" style="background: #e8f5e9; border: 3px solid #27ae60; border-radius: 15px; padding: 20px; cursor: pointer; transition: all 0.3s ease;" onclick="window.FarmGameApp.selectDifficulty('easy')">
+                    <div style="font-size: 3em; margin-bottom: 10px;">🌱</div>
+                    <h3 style="margin: 0 0 10px 0; color: #27ae60;">简单模式</h3>
+                    <p style="color: #7f8c8d; font-size: 0.9em; line-height: 1.5;">资源产出+20%，事件负面影响降低，适合新手</p>
+                </div>
+                <div class="difficulty-option" data-difficulty="normal" style="background: #fff3e0; border: 3px solid #f39c12; border-radius: 15px; padding: 20px; cursor: pointer; transition: all 0.3s ease;" onclick="window.FarmGameApp.selectDifficulty('normal')">
+                    <div style="font-size: 3em; margin-bottom: 10px;">🌾</div>
+                    <h3 style="margin: 0 0 10px 0; color: #f39c12;">普通模式</h3>
+                    <p style="color: #7f8c8d; font-size: 0.9em; line-height: 1.5;">标准难度，平衡的资源和事件，适合有经验的玩家</p>
+                </div>
+                <div class="difficulty-option" data-difficulty="hard" style="background: #ffebee; border: 3px solid #e74c3c; border-radius: 15px; padding: 20px; cursor: pointer; transition: all 0.3s ease;" onclick="window.FarmGameApp.selectDifficulty('hard')">
+                    <div style="font-size: 3em; margin-bottom: 10px;">🔥</div>
+                    <h3 style="margin: 0 0 10px 0; color: #e74c3c;">困难模式</h3>
+                    <p style="color: #7f8c8d; font-size: 0.9em; line-height: 1.5;">资源产出-20%，事件更危险，适合挑战自我</p>
+                </div>
+            </div>
+            <div style="text-align: center;">
+                <p style="color: #7f8c8d; margin-bottom: 15px;">当前难度：<span id="currentDifficulty">普通模式</span></p>
+                <button class="btn btn-primary" onclick="window.FarmGameApp.closeDifficultySelect()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 卡牌升级弹窗 -->
+    <div id="cardUpgradeModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; animation: fadeInScale 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #3498db;">⬆️ 升级卡牌</h2>
+                <button class="btn btn-danger" style="padding: 5px 10px;" onclick="window.FarmGameApp.closeCardUpgrade()">×</button>
+            </div>
+            <div id="upgradeableCards" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;"></div>
+            <p style="color: #7f8c8d; font-size: 0.9em;">💡 升级卡牌可以降低能量消耗，提高资源产出</p>
+        </div>
+    </div>
+
+    <!-- 卡组管理弹窗 -->
+    <div id="deckManageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; animation: fadeInScale 0.3s ease;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #e74c3c;">🗑️ 管理卡组</h2>
+                <button class="btn btn-danger" style="padding: 5px 10px;" onclick="window.FarmGameApp.closeDeckManage()">×</button>
+            </div>
+            <div id="deckCards" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px;"></div>
+            <p style="color: #7f8c8d; font-size: 0.9em;">⚠️ 删除卡牌后无法恢复，请谨慎操作</p>
+        </div>
+    </div>
+
+    <style>
+        @keyframes modalSlideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeInScale {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes relicUnlock {
+            0% { transform: scale(0) rotate(0deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        @keyframes relicFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes achievementUnlock {
+            0% { transform: scale(0) rotate(-30deg); opacity: 0; }
+            50% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .difficulty-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .task-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+        }
+
+        .task-item.completed {
+            border-left-color: #27ae60;
+            background: #e8f5e9;
+        }
+
+        .achievement-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            opacity: 0.5;
+        }
+
+        .achievement-item.unlocked {
+            opacity: 1;
+            border-color: #f39c12;
+            background: #fff3e0;
+        }
+
+        .upgrade-card-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .deck-card-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
 
     <script>
         // 页面加载完成

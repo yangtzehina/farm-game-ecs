@@ -5,7 +5,7 @@
  * 按照Data-Oriented Design原则设计
  * 重点在于数据处理和组件交互
  */
-import { Position, QuestObjectiveType } from './components';
+import { Position, AchievementComponent, AchievementConditionType, QuestObjectiveType, GameEvent, EventTrigger, FutureIntent } from './components';
 export declare abstract class BaseSystem {
     readonly name: string;
     readonly priority: number;
@@ -182,9 +182,147 @@ export declare class QuestSystem extends BaseSystem {
      */
     updateQuestProgress(entity: any, objectiveType: QuestObjectiveType, target: string, amount?: number): void;
     /**
-     * 添加预设的初始任务
+     * 添加预设的初始任务，包含三层目标体系
      */
     addDefaultQuests(entity: any): void;
+}
+export declare class AchievementSystem extends BaseSystem {
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    /**
+     * 添加50个默认成就配置
+     */
+    addDefaultAchievements(achievementComp: AchievementComponent): void;
+    /**
+     * 获取成就图标
+     */
+    private getAchievementIcon;
+    /**
+     * 生成成就奖励
+     */
+    private generateAchievementRewards;
+    /**
+     * 外部调用：更新成就进度
+     */
+    updateAchievementProgress(entity: any, conditionType: AchievementConditionType, target: string, amount?: number): void;
+    /**
+     * 发放成就奖励
+     */
+    private giveAchievementRewards;
+}
+export declare class DifficultySystem extends BaseSystem {
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    /**
+     * 检查难度解锁条件
+     */
+    private checkDifficultyUnlock;
+    /**
+     * 切换难度
+     */
+    setDifficultyLevel(entity: any, level: number): boolean;
+    /**
+     * 难度结算
+     */
+    difficultySettlement(entity: any): void;
+}
+export declare class NotificationSystem extends BaseSystem {
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    /**
+     * 发送任务进度通知
+     */
+    sendQuestProgressNotification(entity: any, questTitle: string, objective: string, current: number, total: number): void;
+    /**
+     * 发送任务完成通知
+     */
+    sendQuestCompleteNotification(entity: any, questTitle: string, rewards: any[]): void;
+}
+export declare class EventSystem extends BaseSystem {
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    /**
+     * 在指定触发点触发随机事件
+     */
+    triggerEvent(triggerType: EventTrigger, playerEntity: any, worldEntity: any): GameEvent | null;
+    /**
+     * 应用事件效果
+     */
+    private applyEventEffects;
+    /**
+     * 回合结束时更新事件状态
+     */
+    endOfRoundUpdate(worldEntity: any): void;
+}
+export declare class RelicSystem extends BaseSystem {
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    /**
+     * 玩家获得遗物
+     */
+    addRelic(playerEntity: any, relicId: string): boolean;
+    /**
+     * 应用所有遗物的效果
+     */
+    applyRelicEffects(playerEntity: any): void;
+    /**
+     * 获取所有生产加成
+     */
+    getProductionBonus(playerEntity: any, targetType: string): number;
+    /**
+     * 获取事件概率调整
+     */
+    getEventProbabilityModifier(playerEntity: any, eventType: string): number;
+}
+export declare class DeckManagementSystem extends BaseSystem {
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    /**
+     * 删除卡牌
+     */
+    deleteCard(playerEntity: any, cardId: string): boolean;
+    /**
+     * 升级卡牌
+     */
+    upgradeCard(playerEntity: any, cardId: string): boolean;
+    /**
+     * 获取所有可升级的卡牌
+     */
+    getUpgradableCards(playerEntity: any): any[];
+}
+export declare class IntentPreviewSystem extends BaseSystem {
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    /**
+     * 添加未来事件提示
+     */
+    addFutureIntent(worldEntity: any, intent: FutureIntent): void;
+    /**
+     * 获取当前需要显示的意图
+     */
+    getCurrentIntents(worldEntity: any, currentRound: number): FutureIntent[];
+    /**
+     * 回合结束时更新意图状态
+     */
+    endOfRoundUpdate(worldEntity: any, currentRound: number): void;
+    /**
+     * 生成未来事件提示
+     */
+    private generateFutureIntents;
 }
 export declare function createDefaultSystems(): SystemManager;
 export declare function debugSystemPerformance(systems: BaseSystem[]): void;
