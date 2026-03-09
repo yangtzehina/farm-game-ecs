@@ -1474,9 +1474,9 @@ class FarmGameEngine {
   }
   loadGameState() {
     try {
-      // 不兼容任何旧存档，直接清空
-      localStorage.removeItem('farmGameSave');
-      console.log('📂 旧存档已清除，开始新游戏');
+      // 强制清空所有旧存档，无任何兼容
+      localStorage.clear();
+      console.log('📂 所有旧存档已强制清除，开始新游戏');
     } catch (e) {
       console.error('❌ 清除旧存档失败', e);
     }
