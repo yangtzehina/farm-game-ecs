@@ -1206,21 +1206,11 @@ class FarmGameEngine {
 
   loadGameState() {
     try {
-      const saved = localStorage.getItem('farmGameSave');
-      if (saved) {
-        const savedState = JSON.parse(saved);
-        // 不兼容旧版本存档，直接重置
-        if (!savedState.shopCards || !savedState.freeRefreshUsed !== undefined) {
-          throw new Error('旧版本存档，不兼容');
-        }
-        this.gameState = savedState;
-        console.log('📂 游戏已加载');
-        this.showMessage('✅ 成功加载存档', '#27ae60');
-      }
-    } catch (e) {
-      console.error('❌ 加载游戏失败，清除旧存档', e);
+      // 不兼容任何旧存档，直接清空
       localStorage.removeItem('farmGameSave');
-      this.showMessage('⚠️ 旧版本存档已清除，游戏已重置', '#e74c3c');
+      console.log('📂 旧存档已清除，开始新游戏');
+    } catch (e) {
+      console.error('❌ 清除旧存档失败', e);
     }
   }
 
