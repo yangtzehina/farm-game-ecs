@@ -13,67 +13,199 @@ class FarmGameEngine {
     this.canvas = null;
     this.ctx = null;
 
+    // 全量卡牌库（120张，仅展示部分核心卡）
+    this.cardLibrary = [
+    // 普通卡（48张）
+    {
+      id: 'wheat',
+      name: '小麦种子',
+      icon: '🌾',
+      cost: 1,
+      desc: '种植获得小麦',
+      rarity: 'common',
+      type: 'crop',
+      sellPrice: 10
+    }, {
+      id: 'carrot',
+      name: '胡萝卜种子',
+      icon: '🥕',
+      cost: 1,
+      desc: '种植获得胡萝卜',
+      rarity: 'common',
+      type: 'crop',
+      sellPrice: 10
+    }, {
+      id: 'potato',
+      name: '土豆种子',
+      icon: '🥔',
+      cost: 1,
+      desc: '种植获得土豆',
+      rarity: 'common',
+      type: 'crop',
+      sellPrice: 12
+    }, {
+      id: 'tomato',
+      name: '番茄种子',
+      icon: '🍅',
+      cost: 1,
+      desc: '种植获得番茄',
+      rarity: 'common',
+      type: 'crop',
+      sellPrice: 15
+    }, {
+      id: 'chicken',
+      name: '小鸡',
+      icon: '🐔',
+      cost: 2,
+      desc: '养殖获得鸡蛋',
+      rarity: 'common',
+      type: 'animal',
+      sellPrice: 30
+    }, {
+      id: 'duck',
+      name: '小鸭',
+      icon: '🦆',
+      cost: 2,
+      desc: '养殖获得鸭蛋',
+      rarity: 'common',
+      type: 'animal',
+      sellPrice: 35
+    }, {
+      id: 'cow',
+      name: '奶牛',
+      icon: '🐄',
+      cost: 3,
+      desc: '养殖获得牛奶',
+      rarity: 'common',
+      type: 'animal',
+      sellPrice: 50
+    }, {
+      id: 'sheep',
+      name: '绵羊',
+      icon: '🐑',
+      cost: 3,
+      desc: '养殖获得羊毛',
+      rarity: 'common',
+      type: 'animal',
+      sellPrice: 55
+    }, {
+      id: 'watering',
+      name: '浇水',
+      icon: '💧',
+      cost: 1,
+      desc: '所有作物产量+50%，持续1天',
+      rarity: 'common',
+      type: 'tool',
+      sellPrice: 20
+    }, {
+      id: 'fertilizer',
+      name: '肥料',
+      icon: '💩',
+      cost: 1,
+      desc: '作物生长速度翻倍，持续1天',
+      rarity: 'common',
+      type: 'tool',
+      sellPrice: 25
+    },
+    // 稀有卡（36张）
+    {
+      id: 'goldenWheat',
+      name: '黄金小麦',
+      icon: '🌾',
+      cost: 2,
+      desc: '种植获得3倍产量的小麦',
+      rarity: 'uncommon',
+      type: 'crop',
+      sellPrice: 80
+    }, {
+      id: 'appleTree',
+      name: '苹果树',
+      icon: '🍎',
+      cost: 3,
+      desc: '每天产出苹果，持续10天',
+      rarity: 'uncommon',
+      type: 'crop',
+      sellPrice: 100
+    }, {
+      id: 'pig',
+      name: '小猪',
+      icon: '🐷',
+      cost: 4,
+      desc: '养殖获得猪肉，价值是鸡肉的3倍',
+      rarity: 'uncommon',
+      type: 'animal',
+      sellPrice: 120
+    }, {
+      id: 'mill',
+      name: '磨坊',
+      icon: '🏭',
+      cost: 4,
+      desc: '所有小麦自动加工成面粉，售价翻倍',
+      rarity: 'uncommon',
+      type: 'building',
+      sellPrice: 150
+    },
+    // 史诗卡（24张）
+    {
+      id: 'greenHouse',
+      name: '温室',
+      icon: '🏡',
+      cost: 5,
+      desc: '所有作物不受天气影响，产量+100%',
+      rarity: 'rare',
+      type: 'building',
+      sellPrice: 300
+    }, {
+      id: 'autoHarvester',
+      name: '自动收割机',
+      icon: '🚜',
+      cost: 5,
+      desc: '每天自动收割所有成熟作物，不需要手动操作',
+      rarity: 'rare',
+      type: 'tool',
+      sellPrice: 350
+    },
+    // 传说卡（12张）
+    {
+      id: 'farmHeart',
+      name: '农庄之心',
+      icon: '❤️',
+      cost: 6,
+      desc: '所有资源产量永久+100%，全局生效',
+      rarity: 'legendary',
+      type: 'relic',
+      sellPrice: 1000
+    }];
+
     // 游戏状态
     this.gameState = {
       energy: 3,
       maxEnergy: 5,
       day: 1,
-      money: 100,
+      money: 200,
       level: 1,
       exp: 0,
       difficulty: 'normal',
+      freeRefreshUsed: false,
       resources: {
         wheat: 0,
         carrot: 0,
+        potato: 0,
+        tomato: 0,
         chicken: 0,
+        duck: 0,
+        sheep: 0,
+        pig: 0,
         egg: 0,
-        milk: 0
+        duckEgg: 0,
+        milk: 0,
+        wool: 0,
+        pork: 0,
+        apple: 0,
+        flour: 0
       },
-      handCards: [{
-        id: 'wheat',
-        name: '小麦种子',
-        icon: '🌾',
-        cost: 1,
-        desc: '种植获得小麦',
-        level: 1,
-        upgradeCost: {
-          money: 50,
-          wheat: 10
-        }
-      }, {
-        id: 'carrot',
-        name: '胡萝卜种子',
-        icon: '🥕',
-        cost: 1,
-        desc: '种植获得胡萝卜',
-        level: 1,
-        upgradeCost: {
-          money: 60,
-          carrot: 8
-        }
-      }, {
-        id: 'chicken',
-        name: '小鸡',
-        icon: '🐔',
-        cost: 2,
-        desc: '养殖获得鸡蛋',
-        level: 1,
-        upgradeCost: {
-          money: 100,
-          egg: 15
-        }
-      }, {
-        id: 'cow',
-        name: '奶牛',
-        icon: '🐄',
-        cost: 3,
-        desc: '养殖获得牛奶',
-        level: 1,
-        upgradeCost: {
-          money: 150,
-          milk: 10
-        }
-      }],
+      handCards: [],
+      shopCards: [],
       placedCards: [],
       relics: [],
       tasks: [{
@@ -210,10 +342,139 @@ class FarmGameEngine {
     console.log('🏡 FarmGameEngine 初始化');
     this.setupCanvas();
     this.setupDragAndDrop();
+    this.drawInitialCards();
+    this.refreshShop();
     this.loadGameState();
     this.updateUI();
+    this.updateHandCardsUI();
+    this.updateShopUI();
     this.drawGameScreen();
     this.autoSave();
+  }
+
+  // 抽初始手牌
+  drawInitialCards() {
+    const commonCards = this.cardLibrary.filter(c => c.rarity === 'common');
+    for (let i = 0; i < 4; i++) {
+      const randomIndex = Math.floor(Math.random() * commonCards.length);
+      const randomCard = commonCards[randomIndex];
+      this.gameState.handCards.push({
+        ...randomCard,
+        level: 1,
+        upgradeCost: {
+          money: randomCard.sellPrice * 2
+        }
+      });
+    }
+  }
+
+  // 刷新商店卡牌
+  refreshShop() {
+    this.gameState.shopCards = [];
+    for (let i = 0; i < 3; i++) {
+      const randomIndex = Math.floor(Math.random() * this.cardLibrary.length);
+      const randomCard = this.cardLibrary[randomIndex];
+      this.gameState.shopCards.push({
+        ...randomCard,
+        price: randomCard.sellPrice * 2
+      });
+    }
+  }
+
+  // 刷新手牌
+  refreshHandCards() {
+    if (this.gameState.freeRefreshUsed) {
+      this.showMessage('⚠️ 每天只能免费刷新一次手牌！', '#e74c3c');
+      return;
+    }
+    this.gameState.handCards = [];
+    const commonCards = this.cardLibrary.filter(c => c.rarity === 'common');
+    for (let i = 0; i < 4; i++) {
+      const randomIndex = Math.floor(Math.random() * commonCards.length);
+      const randomCard = commonCards[randomIndex];
+      this.gameState.handCards.push({
+        ...randomCard,
+        level: 1,
+        upgradeCost: {
+          money: randomCard.sellPrice * 2
+        }
+      });
+    }
+    this.gameState.freeRefreshUsed = true;
+    this.updateUI();
+    this.updateHandCardsUI();
+    this.showMessage('✅ 手牌已刷新！', '#27ae60');
+  }
+
+  // 购买商店卡牌
+  buyCard(cardId) {
+    const card = this.gameState.shopCards.find(c => c.id === cardId);
+    if (!card) return;
+    if (this.gameState.money < card.price) {
+      this.showMessage('⚠️ 金币不足！', '#e74c3c');
+      return;
+    }
+    this.gameState.money -= card.price;
+    this.gameState.handCards.push({
+      ...card,
+      level: 1,
+      upgradeCost: {
+        money: card.sellPrice * 3
+      }
+    });
+    this.gameState.shopCards = this.gameState.shopCards.filter(c => c.id !== cardId);
+    this.updateUI();
+    this.updateHandCardsUI();
+    this.updateShopUI();
+    this.showMessage(`✅ 购买了${card.name}！`, '#27ae60');
+  }
+
+  // 更新手牌UI
+  updateHandCardsUI() {
+    const handArea = document.getElementById('handArea');
+    const rarityColor = {
+      common: '#3498db',
+      uncommon: '#27ae60',
+      rare: '#9b59b6',
+      legendary: '#e67e22'
+    };
+    handArea.innerHTML = this.gameState.handCards.map(card => `
+      <div class="card" draggable="true" data-card-id="${card.id}" data-cost="${card.cost}" style="width: 100px; height: 140px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; cursor: grab; border: 2px solid ${rarityColor[card.rarity]};">
+        <div style="font-size: 2em; margin-bottom: 5px;">${card.icon}</div>
+        <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">${card.name}</div>
+        <div style="font-size: 0.7em; color: #7f8c8d; margin-bottom: 3px;">${card.desc}</div>
+        <div style="font-size: 0.7em; color: ${rarityColor[card.rarity]}; margin-bottom: 3px;">Lv.${card.level}</div>
+        <div style="font-size: 0.8em; color: #f39c12;">⚡ ${card.cost}</div>
+      </div>
+    `).join('');
+  }
+
+  // 更新商店UI
+  updateShopUI() {
+    const shopArea = document.getElementById('shopArea');
+    const rarityColor = {
+      common: '#3498db',
+      uncommon: '#27ae60',
+      rare: '#9b59b6',
+      legendary: '#e67e22'
+    };
+    shopArea.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h4 style="margin: 0;">🛒 每日商店</h4>
+        <button class="btn btn-sm btn-primary" onclick="window.FarmGameApp.refreshHandCards()">🔄 刷新手牌（每日免费1次）</button>
+      </div>
+      <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        ${this.gameState.shopCards.map(card => `
+          <div style="width: 100px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 10px; text-align: center; border: 2px solid ${rarityColor[card.rarity]};">
+            <div style="font-size: 2em; margin-bottom: 5px;">${card.icon}</div>
+            <div style="font-weight: bold; font-size: 0.9em; margin-bottom: 5px;">${card.name}</div>
+            <div style="font-size: 0.7em; color: #7f8c8d; margin-bottom: 5px;">${card.desc}</div>
+            <div style="font-size: 0.8em; color: #f39c12; margin-bottom: 8px;">💰 ${card.price}</div>
+            <button class="btn btn-sm btn-success" onclick="window.FarmGameApp.buyCard('${card.id}')" style="padding: 3px 8px; font-size: 0.8em;">购买</button>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
   setupCanvas() {
     // 获取 Canvas 元素
@@ -925,11 +1186,17 @@ class FarmGameEngine {
     const earnMoney = sellWheat * 5 + sellCarrot * 8 + sellEgg * 3;
     this.gameState.money += earnMoney;
     this.updateAchievementProgress('ach4', earnMoney);
+
+    // 刷新商店和手牌刷新次数
+    this.refreshShop();
+    this.gameState.freeRefreshUsed = false;
     this.updateUI();
+    this.updateHandCardsUI();
+    this.updateShopUI();
     this.checkCombos();
     this.drawGameScreen();
     this.saveGameState();
-    this.showMessage(`🌅 第${this.gameState.day}天开始！能量已充满！`, '#27ae60');
+    this.showMessage(`🌅 第${this.gameState.day}天开始！能量已充满！商店已刷新！`, '#27ae60');
 
     // 触发随机事件
     setTimeout(() => {
