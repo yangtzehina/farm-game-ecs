@@ -62,7 +62,7 @@ DimensionsComponent.TYPE = 'dimensions';
  * 实体的资源存储和生产
  */
 export class ResourceComponent {
-    constructor() {
+    constructor(config = {}) {
         this.resources = {
             '金币': 0,
             '木材': 0,
@@ -84,6 +84,7 @@ export class ResourceComponent {
             '作物': 1000,
             '动物': 500
         };
+        Object.assign(this, config);
     }
     addResource(type, amount) {
         if (!this.resources[type])
@@ -108,13 +109,14 @@ ResourceComponent.TYPE = 'resource';
  * 实体的生产能力
  */
 export class ProductionComponent {
-    constructor() {
+    constructor(config = {}) {
         this.rate = 1;
         this.productionTime = 0;
         this.nextProduction = 1000; // 毫秒
         this.efficiency = 1.0;
         this.quality = 1.0;
         this.automation = false;
+        Object.assign(this, config);
     }
     calculateProduction(baseAmount, efficiency, quality) {
         return baseAmount * this.rate * efficiency * quality;
@@ -142,7 +144,7 @@ CardComponent.TYPE = 'card';
  * CropComponent - 作物卡牌组件
  */
 export class CropComponent {
-    constructor() {
+    constructor(config = {}) {
         this.growthStage = 0;
         this.maxGrowthStage = 4;
         this.growthTime = 0;
@@ -150,6 +152,7 @@ export class CropComponent {
         this.yield = 2;
         this.quality = 1.0;
         this.fertilityBonus = 0;
+        Object.assign(this, config);
     }
     calculateYield() {
         return this.yield * this.quality * (1 + this.fertilityBonus);
@@ -160,7 +163,7 @@ CropComponent.TYPE = 'crop';
  * AnimalComponent - 动物卡牌组件
  */
 export class AnimalComponent {
-    constructor() {
+    constructor(config = {}) {
         this.productivity = 0.5;
         this.consumption = 0.2;
         this.happiness = 80;
@@ -168,6 +171,7 @@ export class AnimalComponent {
         this.age = 0;
         this.maxAge = 100;
         this.health = 100;
+        Object.assign(this, config);
     }
     getProductionBonus() {
         return Math.min(1.5, Math.max(0.5, this.happiness / 100));
@@ -178,12 +182,13 @@ AnimalComponent.TYPE = 'animal';
  * ToolComponent - 工具卡牌组件
  */
 export class ToolComponent {
-    constructor() {
+    constructor(config = {}) {
         this.efficiencyBonus = 0.1;
         this.range = 1;
         this.durability = 100;
         this.maxDurability = 100;
         this.toolType = '收获';
+        Object.assign(this, config);
     }
     use() {
         if (this.durability > 0) {
@@ -207,13 +212,14 @@ ToolComponent.TYPE = 'tool';
  * BuildingComponent - 建筑卡牌组件
  */
 export class BuildingComponent {
-    constructor() {
+    constructor(config = {}) {
         this.buildTime = 0;
         this.buildTimeRemaining = 0;
         this.workers = 0;
         this.maxWorkers = 10;
         this.productivity = 1.0;
         this.maintenanceCost = 5;
+        Object.assign(this, config);
     }
     calculateProductionBonus() {
         return this.workers / this.maxWorkers * this.productivity;
@@ -224,7 +230,7 @@ BuildingComponent.TYPE = 'building';
  * CharacterComponent - 人物卡牌组件
  */
 export class CharacterComponent {
-    constructor() {
+    constructor(config = {}) {
         this.stats = {
             health: 100,
             maxHealth: 100,
@@ -235,6 +241,7 @@ export class CharacterComponent {
         this.experience = 0;
         this.level = 1;
         this.job = '农民';
+        Object.assign(this, config);
     }
     addExperience(amount) {
         const requiredExp = this.level * 100;
@@ -258,8 +265,9 @@ CharacterComponent.TYPE = 'character';
  * 卡牌的升级路径
  */
 export class UpgradeTreeComponent {
-    constructor() {
+    constructor(config = {}) {
         this.upgrades = [];
+        Object.assign(this, config);
     }
     getAvailableUpgrades(currentLevel) {
         return this.upgrades.filter(u => u.level < u.maxLevel &&
@@ -272,7 +280,7 @@ UpgradeTreeComponent.TYPE = 'upgradeTree';
  * 当前实体的升级状态
  */
 export class UpgradeComponent {
-    constructor() {
+    constructor(config = {}) {
         this.points = 0;
         this.currentUpgrades = [];
         this.upgradeCost = {
@@ -280,6 +288,7 @@ export class UpgradeComponent {
             '木材': 10,
             '作物': 5
         };
+        Object.assign(this, config);
     }
     canUpgrade(upgradeCost, currentResources) {
         return Object.entries(upgradeCost).every(([type, cost]) => currentResources[type] >= cost);
@@ -293,7 +302,7 @@ UpgradeComponent.TYPE = 'upgrade';
  * CombatComponent - 战斗基础组件
  */
 export class CombatComponent {
-    constructor() {
+    constructor(config = {}) {
         this.damage = 10;
         this.defense = 5;
         this.attackSpeed = 1.0;
@@ -302,6 +311,7 @@ export class CombatComponent {
         this.criticalChance = 0.1;
         this.criticalMultiplier = 2.0;
         this.attackPattern = '近战';
+        Object.assign(this, config);
     }
     calculateDamage() {
         const baseDamage = this.damage;
@@ -315,8 +325,9 @@ CombatComponent.TYPE = 'combat';
  * 应用于实体的状态效果
  */
 export class EffectComponent {
-    constructor() {
+    constructor(config = {}) {
         this.effects = [];
+        Object.assign(this, config);
     }
     addEffect(name, type, duration, strength, source) {
         const existing = this.effects.find(e => e.name === name && e.source === source);
@@ -353,10 +364,11 @@ EffectComponent.TYPE = 'effect';
  * 玩家的卡牌库、抽牌堆、弃牌堆
  */
 export class DeckComponent {
-    constructor() {
+    constructor(config = {}) {
         this.library = []; // 牌库：所有拥有的卡牌
         this.drawPile = []; // 抽牌堆：待抽的卡牌
         this.discardPile = []; // 弃牌堆：打出/弃掉的卡牌
+        Object.assign(this, config);
     }
     shuffleDrawPile() {
         for (let i = this.drawPile.length - 1; i > 0; i--) {
@@ -385,9 +397,10 @@ DeckComponent.TYPE = 'deck';
  * 玩家当前持有的手牌
  */
 export class HandComponent {
-    constructor() {
+    constructor(config = {}) {
         this.cards = [];
         this.maxHandSize = 8; // 手牌上限
+        Object.assign(this, config);
     }
     addCard(card) {
         if (this.cards.length >= this.maxHandSize)
@@ -409,10 +422,11 @@ HandComponent.TYPE = 'hand';
  * 打牌消耗的能量
  */
 export class EnergyComponent {
-    constructor() {
+    constructor(config = {}) {
         this.current = 3;
         this.max = 10;
         this.regenPerTurn = 2; // 每回合恢复量
+        Object.assign(this, config);
     }
     spend(amount) {
         if (this.current >= amount) {
@@ -431,11 +445,12 @@ EnergyComponent.TYPE = 'energy';
  * 玩家的任务列表和进度
  */
 export class QuestComponent {
-    constructor() {
+    constructor(config = {}) {
         this.quests = [];
         this.completedQuests = [];
         this.dailyResetTime = 86400000; // 24小时
         this.lastDailyReset = Date.now();
+        Object.assign(this, config);
     }
     /**
      * 添加新任务
@@ -521,11 +536,12 @@ QuestComponent.TYPE = 'quest';
  * WorldComponent - 世界状态组件
  */
 export class WorldComponent {
-    constructor() {
+    constructor(config = {}) {
         this.dayNightCycle = 0;
         this.currentDay = 1;
         this.difficulty = '中等';
         this.events = [];
+        Object.assign(this, config);
     }
     getWeatherEffect() {
         // 根据昼夜周期计算天气效果
@@ -537,13 +553,14 @@ WorldComponent.TYPE = 'world';
  * GameStateComponent - 游戏状态组件
  */
 export class GameStateComponent {
-    constructor() {
+    constructor(config = {}) {
         this.gamePhase = '菜单';
         this.score = 0;
         this.combo = 0;
         this.streak = 0;
         this.highScore = 0;
         this.playTime = 0;
+        Object.assign(this, config);
     }
     increaseCombo() {
         this.combo++;
@@ -562,8 +579,9 @@ GameStateComponent.TYPE = 'gameState';
  * 跟踪激活的组合技和效果
  */
 export class ComboComponent {
-    constructor() {
+    constructor(config = {}) {
         this.activeCombos = [];
+        Object.assign(this, config);
     }
     // 激活组合技
     activateCombo(id, name, description, effect, strength, duration) {

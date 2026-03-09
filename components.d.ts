@@ -72,6 +72,7 @@ export declare class ResourceComponent {
     maxStorage: {
         [key: string]: number;
     };
+    constructor(config?: Partial<ResourceComponent>);
     addResource(type: string, amount: number): boolean;
     removeResource(type: string, amount: number): boolean;
 }
@@ -87,6 +88,7 @@ export declare class ProductionComponent {
     efficiency: number;
     quality: number;
     automation: boolean;
+    constructor(config?: Partial<ProductionComponent>);
     calculateProduction(baseAmount: number, efficiency: number, quality: number): number;
 }
 /**
@@ -113,6 +115,7 @@ export declare class CropComponent {
     yield: number;
     quality: number;
     fertilityBonus: number;
+    constructor(config?: Partial<CropComponent>);
     calculateYield(): number;
 }
 /**
@@ -127,6 +130,7 @@ export declare class AnimalComponent {
     age: number;
     maxAge: number;
     health: number;
+    constructor(config?: Partial<AnimalComponent>);
     getProductionBonus(): number;
 }
 /**
@@ -139,6 +143,7 @@ export declare class ToolComponent {
     durability: number;
     maxDurability: number;
     toolType: '收获' | '耕作' | '建造' | '战斗';
+    constructor(config?: Partial<ToolComponent>);
     use(): boolean;
     repair(amount: number): boolean;
 }
@@ -153,6 +158,7 @@ export declare class BuildingComponent {
     maxWorkers: number;
     productivity: number;
     maintenanceCost: number;
+    constructor(config?: Partial<BuildingComponent>);
     calculateProductionBonus(): number;
 }
 /**
@@ -171,6 +177,7 @@ export declare class CharacterComponent {
     experience: number;
     level: number;
     job: string;
+    constructor(config?: Partial<CharacterComponent>);
     addExperience(amount: number): boolean;
 }
 /**
@@ -194,6 +201,7 @@ export declare class UpgradeTreeComponent {
             value: number;
         }>;
     }>;
+    constructor(config?: Partial<UpgradeTreeComponent>);
     getAvailableUpgrades(currentLevel: number): any[];
 }
 /**
@@ -214,6 +222,7 @@ export declare class UpgradeComponent {
     upgradeCost: {
         [key: string]: number;
     };
+    constructor(config?: Partial<UpgradeComponent>);
     canUpgrade(upgradeCost: {
         [key: string]: number;
     }, currentResources: {
@@ -233,6 +242,7 @@ export declare class CombatComponent {
     criticalChance: number;
     criticalMultiplier: number;
     attackPattern: '近战' | '远程' | '范围';
+    constructor(config?: Partial<CombatComponent>);
     calculateDamage(): number;
 }
 /**
@@ -250,6 +260,7 @@ export declare class EffectComponent {
         stacking: number;
         source: string;
     }>;
+    constructor(config?: Partial<EffectComponent>);
     addEffect(name: string, type: 'buff' | 'debuff', duration: number, strength: number, source: string): void;
     removeEffect(name: string, source?: string): void;
     updateEffects(dt: number): void;
@@ -263,6 +274,7 @@ export declare class DeckComponent {
     library: any[];
     drawPile: any[];
     discardPile: any[];
+    constructor(config?: Partial<DeckComponent>);
     shuffleDrawPile(): void;
     drawCard(): any | null;
     discardCard(card: any): void;
@@ -275,6 +287,7 @@ export declare class HandComponent {
     static readonly TYPE = "hand";
     cards: any[];
     maxHandSize: number;
+    constructor(config?: Partial<HandComponent>);
     addCard(card: any): boolean;
     removeCard(cardId: string): any | null;
 }
@@ -287,6 +300,7 @@ export declare class EnergyComponent {
     current: number;
     max: number;
     regenPerTurn: number;
+    constructor(config?: Partial<EnergyComponent>);
     spend(amount: number): boolean;
     regen(): void;
 }
@@ -333,6 +347,7 @@ export declare class QuestComponent {
     completedQuests: string[];
     dailyResetTime: number;
     lastDailyReset: number;
+    constructor(config?: Partial<QuestComponent>);
     /**
      * 添加新任务
      */
@@ -380,6 +395,7 @@ export declare class WorldComponent {
         }>;
         active: boolean;
     }>;
+    constructor(config?: Partial<WorldComponent>);
     getWeatherEffect(): number;
 }
 /**
@@ -393,6 +409,7 @@ export declare class GameStateComponent {
     streak: number;
     highScore: number;
     playTime: number;
+    constructor(config?: Partial<GameStateComponent>);
     increaseCombo(): void;
     resetCombo(): void;
 }
@@ -412,6 +429,7 @@ export declare class ComboComponent {
         strength: number;
         active: boolean;
     }>;
+    constructor(config?: Partial<ComboComponent>);
     activateCombo(id: string, name: string, description: string, effect: string, strength: number, duration?: number): boolean;
     deactivateCombo(id: string): boolean;
     isComboActive(id: string): boolean;
