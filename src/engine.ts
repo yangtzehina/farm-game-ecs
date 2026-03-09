@@ -527,16 +527,57 @@ export function stopGameEngine(): void {
 }
 
 // ==========================================
+// 事件总线 - Event Bus
+// ==========================================
+
+class EventBus {
+  private listeners: Map<string, Function[]> = new Map();
+
+  on(key: string, callback: Function): void {
+    if (!this.listeners.has(key)) {
+      this.listeners.set(key, []);
+    }
+    this.listeners.get(key)!.push(callback);
+  }
+
+  off(key: string, callback: Function): void {
+    const callbacks = this.listeners.get(key);
+    if (callbacks) {
+      const index = callbacks.indexOf(callback);
+      if (index > -1) {
+        callbacks.splice(index, 1);
+      }
+    }
+  }
+
+  dispatch(key: string, data?: any): void {
+    const callbacks = this.listeners.get(key);
+    if (callbacks) {
+      callbacks.forEach(cb => cb(data));
+    }
+  }
+}
+
+export const globalBus = new EventBus();
+
+// ==========================================
 // 事件监听器 - Event Listeners
 // ==========================================
 
 export function on(entityId: string, event: string, callback: Function): void {
-  // TODO: 实现事件监听
-  console.log(`📡 事件监听: ${entityId} -> ${event}`);
+  const key = entityId ? `${entityId}:${event}` : event;
+  globalBus.on(key, callback);
+  console.log(`📡 事件监听: ${key}`);
+}
+
+export function off(entityId: string, event: string, callback: Function): void {
+  const key = entityId ? `${entityId}:${event}` : event;
+  globalBus.off(key, callback);
+  console.log(`📡 移除事件监听: ${key}`);
 }
 
 export function dispatch(event: string, data?: any): void {
-  // TODO: 实现事件分发
+  globalBus.dispatch(event, data);
   console.log(`📡 事件分发: ${event}`, data);
 }
 
