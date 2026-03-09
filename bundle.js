@@ -425,34 +425,35 @@ class FarmGameEngine {
     this.gameState.energy = this.gameState.maxEnergy;
     this.updateUI();
     this.drawGameScreen();
-    this.dayLoop();
+    this.showMessage('🎮 游戏开始！打出卡牌消耗能量，用完后点击「进入下一天」恢复能量哦~', '#27ae60');
   }
-  dayLoop() {
-    if (!this.gameRunning) return;
-    setTimeout(() => {
-      if (!this.gameRunning) return;
+  nextDay() {
+    if (!this.gameRunning) {
+      this.showMessage('⚠️ 请先开始游戏！', '#e74c3c');
+      return;
+    }
+    console.log('🌅 进入下一天');
 
-      // 天数增加
-      this.gameState.day += 1;
+    // 天数增加
+    this.gameState.day += 1;
 
-      // 恢复能量
-      this.gameState.energy = this.gameState.maxEnergy;
+    // 恢复能量
+    this.gameState.energy = this.gameState.maxEnergy;
 
-      // 自动产出资源
-      this.gameState.resources.egg += this.gameState.resources.chicken;
-      this.gameState.resources.milk += this.gameState.resources.chicken >= 2 ? 1 : 0;
+    // 自动产出资源
+    this.gameState.resources.egg += this.gameState.resources.chicken;
+    this.gameState.resources.milk += this.gameState.resources.chicken >= 2 ? 1 : 0;
 
-      // 卖掉多余的资源获得金币
-      const sellWheat = Math.max(0, this.gameState.resources.wheat - 5);
-      const sellCarrot = Math.max(0, this.gameState.resources.carrot - 3);
-      const sellEgg = Math.max(0, this.gameState.resources.egg - 10);
-      this.gameState.money += sellWheat * 5 + sellCarrot * 8 + sellEgg * 3;
-      this.updateUI();
-      this.checkCombos();
-      this.drawGameScreen();
-      this.saveGameState();
-      this.dayLoop();
-    }, 30000); // 30秒一天
+    // 卖掉多余的资源获得金币
+    const sellWheat = Math.max(0, this.gameState.resources.wheat - 5);
+    const sellCarrot = Math.max(0, this.gameState.resources.carrot - 3);
+    const sellEgg = Math.max(0, this.gameState.resources.egg - 10);
+    this.gameState.money += sellWheat * 5 + sellCarrot * 8 + sellEgg * 3;
+    this.updateUI();
+    this.checkCombos();
+    this.drawGameScreen();
+    this.saveGameState();
+    this.showMessage(`🌅 第${this.gameState.day}天开始！能量已充满！`, '#27ae60');
   }
   pause() {
     if (!this.gameRunning) {
