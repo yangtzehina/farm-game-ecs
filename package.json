@@ -8,7 +8,7 @@
     "start": "node src/index.js",
     "dev": "node src/engine.js",
     "build": "node src/index.js",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test": "node --import tsx --test test/*.test.ts",
     "debug": "node src/index.js --debug",
     "profile": "node src/index.js --profile",
     "build:ts": "tsc",
@@ -43,6 +43,7 @@
     "jest": "^30.2.0",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.3",
     "uglifyify": "^5.0.2"
   },

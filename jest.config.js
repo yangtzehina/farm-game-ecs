@@ -6,7 +6,7 @@ export default {
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
   },
-  testMatch: ['**/test-*.ts'],
+  testMatch: ['**/*.test.ts'],
   collectCoverage: true,
   collectCoverageFrom: [
     'src/components.ts',

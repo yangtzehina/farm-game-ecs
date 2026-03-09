@@ -28,10 +28,26 @@ import {
   COMPONENT_REGISTRY,
   ComboComponent,
   QuestComponent,
+  AchievementComponent,
+  NotificationComponent,
+  DifficultyComponent,
+  AchievementConditionType,
+  NotificationType,
+  AchievementRarity,
+  Achievement,
   Quest,
   QuestObjectiveType,
-  QuestReward
+  QuestReward,
+  EventSystemComponent,
+  GameEvent,
+  EventTrigger,
+  RelicComponent,
+  Relic,
+  IntentPreviewComponent,
+  FutureIntent
 } from './components';
+import { EVENTS_CONFIG } from './events.config';
+import { RELICS_CONFIG } from './relics.config';
 
 // ==========================================
 // 系统基类 - System Base Class
@@ -889,6 +905,22 @@ export class ComboSystem extends BaseSystem {
   private applyComboEffects(player: any, comboComp: ComboComponent, entities: any[]): void {
     const activeCombos = comboComp.getActiveCombos();
     
+    // 先恢复所有实体的原始状态，清除之前的组合效果
+    entities.forEach(entity => {
+      if (entity['production']) {
+        // 恢复原始效率
+        if (entity['production']['originalEfficiency']) {
+          entity['production']['efficiency'] = entity['production']['originalEfficiency'];
+          delete entity['production']['originalEfficiency'];
+        }
+        // 关闭自动收集
+        if (entity['animal'] && entity['production']['automation']) {
+          entity['production']['automation'] = false;
+        }
+      }
+    });
+    
+    // 应用当前激活的组合效果
     activeCombos.forEach(combo => {
       switch (combo.effect) {
         case 'crop_yield_multiplier':
@@ -1164,17 +1196,187 @@ export class QuestSystem extends BaseSystem {
     if (!entity['quest']) return;
     
     const questComp = entity['quest'] as QuestComponent;
+    const notificationSystem = SystemManager.getInstance().getSystem<NotificationSystem>('通知管理');
+    const achievementSystem = SystemManager.getInstance().getSystem<AchievementSystem>('成就管理');
+    
+    // 保存更新前的进度
+    const beforeProgress = new Map<string, { current: number, total: number }>();
+    questComp.quests.forEach(quest => {
+      quest.objectives.forEach(obj => {
+        beforeProgress.set(`${quest.id}_${obj.id}`, {
+          current: obj.currentAmount,
+          total: obj.requiredAmount
+        });
+      });
+    });
+    
+    // 更新进度
     questComp.updateProgress(objectiveType, target, amount);
+    
+    // 检查进度变化，发送通知
+    questComp.quests.forEach(quest => {
+      if (!quest.unlocked || quest.completed) return;
+      
+      quest.objectives.forEach(obj => {
+        const key = `${quest.id}_${obj.id}`;
+        const before = beforeProgress.get(key);
+        if (before && before.current !== obj.currentAmount) {
+          // 进度发生变化
+          if (notificationSystem) {
+            notificationSystem.sendQuestProgressNotification(
+              entity,
+              quest.title,
+              obj.target,
+              obj.currentAmount,
+              obj.requiredAmount
+            );
+          }
+
+          // 如果任务完成，发送完成通知
+          if (obj.currentAmount >= obj.requiredAmount && quest.completed) {
+            const rewards = questComp.claimRewards(quest.id);
+            if (rewards && notificationSystem) {
+              notificationSystem.sendQuestCompleteNotification(entity, quest.title, rewards);
+            }
+          }
+        }
+      });
+    });
+
+    // 更新成就进度
+    if (achievementSystem) {
+      achievementSystem.updateAchievementProgress(entity, objectiveType as any, target, amount);
+    }
   }
 
   /**
-   * 添加预设的初始任务
+   * 添加预设的初始任务，包含三层目标体系
    */
   addDefaultQuests(entity: any): void {
     if (!entity['quest']) return;
     
     const questComp = entity['quest'] as QuestComponent;
     
+    // ==========================================
+    // 长期通关目标 - 最高优先级，最终目标
+    // ==========================================
+    questComp.addQuest({
+      id: 'longterm_1',
+      type: '长期通关',
+      title: '农庄大亨',
+      description: '建设顶级农庄，所有设施满级，所有卡牌满级，通关所有难度',
+      objectives: [
+        { id: 'lt_obj_1', type: '卡牌满级', target: '全部', requiredAmount: 52, currentAmount: 0, completed: false },
+        { id: 'lt_obj_2', type: '建筑满级', target: '全部', requiredAmount: 10, currentAmount: 0, completed: false },
+        { id: 'lt_obj_3', type: '难度通关', target: '20', requiredAmount: 1, currentAmount: 0, completed: false }
+      ],
+      rewards: [
+        { type: '金币', target: '', amount: 100000 },
+        { type: '经验', target: '', amount: 10000 },
+        { type: '称号', target: '农庄之神', amount: 1 }
+      ],
+      unlocked: true,
+      completed: false,
+      claimed: false,
+      priority: 100
+    });
+
+    // ==========================================
+    // 中期阶段任务 - 分阶段目标，每完成一个阶段解锁新内容
+    // ==========================================
+    // 阶段1：新手阶段
+    questComp.addQuest({
+      id: 'mid_1',
+      type: '中期阶段',
+      title: '阶段1：新手入门',
+      description: '完成基础操作，熟悉游戏玩法',
+      objectives: [
+        { id: 'mid_obj_1', type: '收集资源', target: '作物', requiredAmount: 50, currentAmount: 0, completed: false },
+        { id: 'mid_obj_2', type: '升级卡牌', target: '任意', requiredAmount: 3, currentAmount: 0, completed: false },
+        { id: 'mid_obj_3', type: '完成任务', target: 'main_3', requiredAmount: 1, currentAmount: 0, completed: false }
+      ],
+      rewards: [
+        { type: '金币', target: '', amount: 500 },
+        { type: '资源', target: '木材', amount: 200 },
+        { type: '经验', target: '', amount: 500 }
+      ],
+      unlocked: true,
+      completed: false,
+      claimed: false,
+      priority: 50
+    });
+
+    // 阶段2：发展阶段
+    questComp.addQuest({
+      id: 'mid_2',
+      type: '中期阶段',
+      title: '阶段2：农庄发展',
+      description: '扩大农庄规模，解锁更多卡牌',
+      objectives: [
+        { id: 'mid_obj_4', type: '收集资源', target: '金币', requiredAmount: 1000, currentAmount: 0, completed: false },
+        { id: 'mid_obj_5', type: '拥有卡牌', target: '动物', requiredAmount: 5, currentAmount: 0, completed: false },
+        { id: 'mid_obj_6', type: '完成任务', target: 'mid_1', requiredAmount: 1, currentAmount: 0, completed: false }
+      ],
+      rewards: [
+        { type: '金币', target: '', amount: 1500 },
+        { type: '资源', target: '石头', amount: 300 },
+        { type: '经验', target: '', amount: 1000 }
+      ],
+      unlocked: false,
+      completed: false,
+      claimed: false,
+      unlockCondition: { type: '完成任务', target: 'mid_1', amount: 1 },
+      priority: 50
+    });
+
+    // 阶段3：扩张阶段
+    questComp.addQuest({
+      id: 'mid_3',
+      type: '中期阶段',
+      title: '阶段3：农庄扩张',
+      description: '建设更多设施，提升生产效率',
+      objectives: [
+        { id: 'mid_obj_7', type: '建筑满级', target: '任意', requiredAmount: 3, currentAmount: 0, completed: false },
+        { id: 'mid_obj_8', type: '组合技激活', target: '任意', requiredAmount: 3, currentAmount: 0, completed: false },
+        { id: 'mid_obj_9', type: '完成任务', target: 'mid_2', requiredAmount: 1, currentAmount: 0, completed: false }
+      ],
+      rewards: [
+        { type: '金币', target: '', amount: 3000 },
+        { type: '经验', target: '', amount: 2000 },
+        { type: '卡牌', target: '高级卡牌包', amount: 1 }
+      ],
+      unlocked: false,
+      completed: false,
+      claimed: false,
+      unlockCondition: { type: '完成任务', target: 'mid_2', amount: 1 },
+      priority: 50
+    });
+
+    // ==========================================
+    // 短期回合目标 - 每回合/每日的即时目标，提供即时反馈
+    // ==========================================
+    // 当前回合目标
+    questComp.addQuest({
+      id: 'short_1',
+      type: '短期回合',
+      title: '本回合目标',
+      description: '本回合内生产3个作物资源',
+      objectives: [
+        { id: 'short_obj_1', type: '生产物品', target: '作物', requiredAmount: 3, currentAmount: 0, completed: false }
+      ],
+      rewards: [
+        { type: '金币', target: '', amount: 50 },
+        { type: '经验', target: '', amount: 50 }
+      ],
+      unlocked: true,
+      completed: false,
+      claimed: false,
+      priority: 10
+    });
+
+    // ==========================================
+    // 传统主线任务
+    // ==========================================
     // 主线任务1
     questComp.addQuest({
       id: 'main_1',
@@ -1231,6 +1433,37 @@ export class QuestSystem extends BaseSystem {
       },
       priority: 2
     });
+
+    // 主线任务3
+    questComp.addQuest({
+      id: 'main_3',
+      type: '主线',
+      title: '升级卡牌',
+      description: '升级3张卡牌',
+      objectives: [
+        {
+          id: 'obj_3',
+          type: '升级卡牌',
+          target: '任意',
+          requiredAmount: 3,
+          currentAmount: 0,
+          completed: false
+        }
+      ],
+      rewards: [
+        { type: '金币', target: '', amount: 300 },
+        { type: '经验', target: '', amount: 300 }
+      ],
+      unlocked: false,
+      completed: false,
+      claimed: false,
+      unlockCondition: {
+        type: '完成任务',
+        target: 'main_2',
+        amount: 1
+      },
+      priority: 3
+    });
     
     // 日常任务
     questComp.addQuest({
@@ -1259,7 +1492,843 @@ export class QuestSystem extends BaseSystem {
       priority: 10
     });
     
-    console.log('📋 初始任务已添加');
+    console.log('📋 初始任务已添加，包含三层目标体系');
+  }
+}
+
+// ==========================================
+// 成就系统 - Achievement System
+// ==========================================
+
+export class AchievementSystem extends BaseSystem {
+  constructor() {
+    super('成就管理', 40);
+    this.updateInterval = 1000;
+  }
+
+  getRequiredComponents(): string[] {
+    return ['achievement', 'resource', 'notification'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const filteredEntities = this.filterEntities(entities);
+    
+    filteredEntities.forEach(entity => {
+      const achievementComp = entity['achievement'] as AchievementComponent;
+      const notificationComp = entity['notification'] as NotificationComponent;
+      
+      // 初始化默认成就（如果还没有添加）
+      if (achievementComp.achievements.length === 0) {
+        this.addDefaultAchievements(achievementComp);
+      }
+    });
+  }
+
+  /**
+   * 添加50个默认成就配置
+   */
+  addDefaultAchievements(achievementComp: AchievementComponent): void {
+    // 普通成就 - 资源收集类 10个
+    const resourceAchievements = [
+      { id: 'res_1', name: '初次收获', description: '收集10个作物', rarity: '普通', points: 10, conditions: [{ type: '收集资源', target: '作物', requiredAmount: 10, currentAmount: 0 }] },
+      { id: 'res_2', name: '农场新手', description: '收集100个作物', rarity: '普通', points: 20, conditions: [{ type: '收集资源', target: '作物', requiredAmount: 100, currentAmount: 0 }] },
+      { id: 'res_3', name: '种植大师', description: '收集1000个作物', rarity: '稀有', points: 50, conditions: [{ type: '收集资源', target: '作物', requiredAmount: 1000, currentAmount: 0 }] },
+      { id: 'res_4', name: '养殖新手', description: '收集10个动物资源', rarity: '普通', points: 10, conditions: [{ type: '收集资源', target: '动物', requiredAmount: 10, currentAmount: 0 }] },
+      { id: 'res_5', name: '养殖达人', description: '收集100个动物资源', rarity: '普通', points: 20, conditions: [{ type: '收集资源', target: '动物', requiredAmount: 100, currentAmount: 0 }] },
+      { id: 'res_6', name: '畜牧业大亨', description: '收集1000个动物资源', rarity: '稀有', points: 50, conditions: [{ type: '收集资源', target: '动物', requiredAmount: 1000, currentAmount: 0 }] },
+      { id: 'res_7', name: '第一桶金', description: '收集100金币', rarity: '普通', points: 10, conditions: [{ type: '收集资源', target: '金币', requiredAmount: 100, currentAmount: 0 }] },
+      { id: 'res_8', name: '小康之家', description: '收集1000金币', rarity: '普通', points: 20, conditions: [{ type: '收集资源', target: '金币', requiredAmount: 1000, currentAmount: 0 }] },
+      { id: 'res_9', name: '百万富翁', description: '收集10000金币', rarity: '史诗', points: 100, conditions: [{ type: '收集资源', target: '金币', requiredAmount: 10000, currentAmount: 0 }] },
+      { id: 'res_10', name: '资源大亨', description: '所有资源各收集1000个', rarity: '史诗', points: 150, conditions: [
+        { type: '收集资源', target: '金币', requiredAmount: 1000, currentAmount: 0 },
+        { type: '收集资源', target: '木材', requiredAmount: 1000, currentAmount: 0 },
+        { type: '收集资源', target: '石头', requiredAmount: 1000, currentAmount: 0 },
+        { type: '收集资源', target: '作物', requiredAmount: 1000, currentAmount: 0 },
+        { type: '收集资源', target: '动物', requiredAmount: 1000, currentAmount: 0 }
+      ]},
+    ];
+
+    // 卡牌升级类 10个
+    const upgradeAchievements = [
+      { id: 'upgrade_1', name: '初次升级', description: '升级1张卡牌', rarity: '普通', points: 10, conditions: [{ type: '升级卡牌', target: '任意', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'upgrade_2', name: '升级爱好者', description: '升级10张卡牌', rarity: '普通', points: 20, conditions: [{ type: '升级卡牌', target: '任意', requiredAmount: 10, currentAmount: 0 }] },
+      { id: 'upgrade_3', name: '升级大师', description: '升级50张卡牌', rarity: '稀有', points: 50, conditions: [{ type: '升级卡牌', target: '任意', requiredAmount: 50, currentAmount: 0 }] },
+      { id: 'upgrade_4', name: '卡牌满级', description: '1张卡牌达到最高级', rarity: '稀有', points: 50, conditions: [{ type: '卡牌满级', target: '任意', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'upgrade_5', name: '满级收藏家', description: '10张卡牌达到最高级', rarity: '史诗', points: 100, conditions: [{ type: '卡牌满级', target: '任意', requiredAmount: 10, currentAmount: 0 }] },
+      { id: 'upgrade_6', name: '作物专家', description: '所有作物卡牌满级', rarity: '史诗', points: 150, conditions: [{ type: '卡牌满级', target: '作物', requiredAmount: 16, currentAmount: 0 }] },
+      { id: 'upgrade_7', name: '动物专家', description: '所有动物卡牌满级', rarity: '史诗', points: 150, conditions: [{ type: '卡牌满级', target: '动物', requiredAmount: 8, currentAmount: 0 }] },
+      { id: 'upgrade_8', name: '工具专家', description: '所有工具卡牌满级', rarity: '史诗', points: 150, conditions: [{ type: '卡牌满级', target: '工具', requiredAmount: 12, currentAmount: 0 }] },
+      { id: 'upgrade_9', name: '建筑专家', description: '所有建筑卡牌满级', rarity: '史诗', points: 150, conditions: [{ type: '卡牌满级', target: '建筑', requiredAmount: 10, currentAmount: 0 }] },
+      { id: 'upgrade_10', name: '全满级大师', description: '所有卡牌满级', rarity: '传说', points: 500, conditions: [{ type: '卡牌满级', target: '全部', requiredAmount: 52, currentAmount: 0 }] },
+    ];
+
+    // 游戏进度类 10个
+    const progressAchievements = [
+      { id: 'progress_1', name: '初入农庄', description: '存活10天', rarity: '普通', points: 10, conditions: [{ type: '存活天数', target: '任意', requiredAmount: 10, currentAmount: 0 }] },
+      { id: 'progress_2', name: '农庄经营者', description: '存活30天', rarity: '普通', points: 20, conditions: [{ type: '存活天数', target: '任意', requiredAmount: 30, currentAmount: 0 }] },
+      { id: 'progress_3', name: '农庄主人', description: '存活100天', rarity: '稀有', points: 50, conditions: [{ type: '存活天数', target: '任意', requiredAmount: 100, currentAmount: 0 }] },
+      { id: 'progress_4', name: '百年农庄', description: '存活365天', rarity: '史诗', points: 100, conditions: [{ type: '存活天数', target: '任意', requiredAmount: 365, currentAmount: 0 }] },
+      { id: 'progress_5', name: '千年世家', description: '存活1000天', rarity: '传说', points: 300, conditions: [{ type: '存活天数', target: '任意', requiredAmount: 1000, currentAmount: 0 }] },
+      { id: 'progress_6', name: '任务达人', description: '完成10个任务', rarity: '普通', points: 10, conditions: [{ type: '完成任务', target: '任意', requiredAmount: 10, currentAmount: 0 }] },
+      { id: 'progress_7', name: '任务大师', description: '完成100个任务', rarity: '普通', points: 20, conditions: [{ type: '完成任务', target: '任意', requiredAmount: 100, currentAmount: 0 }] },
+      { id: 'progress_8', name: '组合技新手', description: '激活1个组合技', rarity: '普通', points: 10, conditions: [{ type: '组合技激活', target: '任意', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'progress_9', name: '组合技大师', description: '激活所有组合技', rarity: '稀有', points: 50, conditions: [{ type: '组合技激活', target: '全部', requiredAmount: 5, currentAmount: 0 }] },
+      { id: 'progress_10', name: '成就收藏家', description: '获得25个成就', rarity: '史诗', points: 100, conditions: [{ type: '获得成就', target: '任意', requiredAmount: 25, currentAmount: 0 }] },
+    ];
+
+    // 难度挑战类 10个
+    const difficultyAchievements = [
+      { id: 'diff_1', name: '难度入门', description: '通关难度1', rarity: '普通', points: 10, conditions: [{ type: '难度通关', target: '1', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'diff_2', name: '难度进阶', description: '通关难度5', rarity: '普通', points: 20, conditions: [{ type: '难度通关', target: '5', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'diff_3', name: '难度挑战', description: '通关难度10', rarity: '稀有', points: 50, conditions: [{ type: '难度通关', target: '10', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'diff_4', name: '难度专家', description: '通关难度15', rarity: '史诗', points: 100, conditions: [{ type: '难度通关', target: '15', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'diff_5', name: '极限挑战者', description: '通关难度20', rarity: '传说', points: 300, conditions: [{ type: '难度通关', target: '20', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'diff_6', name: '无败新手', description: '难度1无失败通关', rarity: '普通', points: 20, conditions: [{ type: '无失败通关', target: '1', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'diff_7', name: '无败达人', description: '难度5无失败通关', rarity: '稀有', points: 50, conditions: [{ type: '无失败通关', target: '5', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'diff_8', name: '无败大师', description: '难度10无失败通关', rarity: '史诗', points: 100, conditions: [{ type: '无失败通关', target: '10', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'diff_9', name: '不败传说', description: '难度15无失败通关', rarity: '传说', points: 200, conditions: [{ type: '无失败通关', target: '15', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'diff_10', name: '神级玩家', description: '难度20无失败通关', rarity: '传说', points: 500, conditions: [{ type: '无失败通关', target: '20', requiredAmount: 1, currentAmount: 0 }] },
+    ];
+
+    // 隐藏成就 10个
+    const hiddenAchievements = [
+      { id: 'hidden_1', name: '速通大师', description: '10天内完成主线任务10', rarity: '稀有', points: 50, hidden: true, conditions: [{ type: '完成任务', target: 'main_10', requiredAmount: 1, currentAmount: 0 }] },
+      { id: 'hidden_2', name: '天胡开局', description: '第一天抽到3张金色卡牌', rarity: '稀有', points: 50, hidden: true, conditions: [{ type: '拥有卡牌', target: '金色', requiredAmount: 3, currentAmount: 0 }] },
+      { id: 'hidden_3', name: '非酋附体', description: '连续10次抽卡都是普通卡牌', rarity: '普通', points: 10, hidden: true, conditions: [{ type: '拥有卡牌', target: '普通', requiredAmount: 10, currentAmount: 0 }] },
+      { id: 'hidden_4', name: '环保主义者', description: '30天不砍伐树木', rarity: '稀有', points: 50, hidden: true, conditions: [{ type: '收集资源', target: '木材', requiredAmount: 0, currentAmount: 0 }] },
+      { id: 'hidden_5', name: '素食主义者', description: '30天不养殖动物', rarity: '稀有', points: 50, hidden: true, conditions: [{ type: '收集资源', target: '动物', requiredAmount: 0, currentAmount: 0 }] },
+      { id: 'hidden_6', name: '守财奴', description: '100天不花一分金币', rarity: '史诗', points: 100, hidden: true, conditions: [{ type: '收集资源', target: '金币', requiredAmount: 1000, currentAmount: 0 }] },
+      { id: 'hidden_7', name: '建筑大师', description: '所有建筑满级', rarity: '史诗', points: 150, hidden: true, conditions: [{ type: '建筑满级', target: '全部', requiredAmount: 10, currentAmount: 0 }] },
+      { id: 'hidden_8', name: '卡牌收藏家', description: '收集所有卡牌', rarity: '史诗', points: 150, hidden: true, conditions: [{ type: '收集所有卡牌', target: '全部', requiredAmount: 52, currentAmount: 0 }] },
+      { id: 'hidden_9', name: '完美主义者', description: '所有成就达成', rarity: '传说', points: 1000, hidden: true, conditions: [{ type: '获得成就', target: '全部', requiredAmount: 49, currentAmount: 0 }] },
+      { id: 'hidden_10', name: '农庄之神', description: '所有条件全部满级', rarity: '传说', points: 2000, hidden: true, conditions: [
+        { type: '卡牌满级', target: '全部', requiredAmount: 52, currentAmount: 0 },
+        { type: '建筑满级', target: '全部', requiredAmount: 10, currentAmount: 0 },
+        { type: '难度通关', target: '20', requiredAmount: 1, currentAmount: 0 },
+        { type: '获得成就', target: '全部', requiredAmount: 49, currentAmount: 0 }
+      ]},
+    ];
+
+    // 添加所有成就
+    [...resourceAchievements, ...upgradeAchievements, ...progressAchievements, ...difficultyAchievements, ...hiddenAchievements].forEach(ach => {
+      achievementComp.addAchievement({
+        ...ach,
+        icon: this.getAchievementIcon(ach.rarity as AchievementRarity),
+        rewards: this.generateAchievementRewards(ach.rarity as AchievementRarity, ach.points),
+        unlocked: false,
+        hidden: (ach as any).hidden ?? false
+      } as Achievement);
+    });
+
+    console.log(`🏆 已加载 ${achievementComp.achievements.length} 个成就`);
+  }
+
+  /**
+   * 获取成就图标
+   */
+  private getAchievementIcon(rarity: string): string {
+    switch (rarity) {
+      case '普通': return '🥉';
+      case '稀有': return '🥈';
+      case '史诗': return '🥇';
+      case '传说': return '🏆';
+      case '隐藏': return '⭐';
+      default: return '🎖️';
+    }
+  }
+
+  /**
+   * 生成成就奖励
+   */
+  private generateAchievementRewards(rarity: string, points: number): any[] {
+    const rewards: any[] = [];
+    const multiplier = points / 10;
+
+    switch (rarity) {
+      case '普通':
+        rewards.push({ type: '金币', target: '', amount: 100 * multiplier });
+        rewards.push({ type: '资源', target: '木材', amount: 50 * multiplier });
+        break;
+      case '稀有':
+        rewards.push({ type: '金币', target: '', amount: 300 * multiplier });
+        rewards.push({ type: '资源', target: '石头', amount: 100 * multiplier });
+        break;
+      case '史诗':
+        rewards.push({ type: '金币', target: '', amount: 1000 * multiplier });
+        rewards.push({ type: '经验', target: '', amount: 500 * multiplier });
+        break;
+      case '传说':
+        rewards.push({ type: '金币', target: '', amount: 5000 * multiplier });
+        rewards.push({ type: '经验', target: '', amount: 2000 * multiplier });
+        rewards.push({ type: '头像框', target: rarity, amount: 1 });
+        break;
+      case '隐藏':
+        rewards.push({ type: '金币', target: '', amount: 200 * multiplier });
+        rewards.push({ type: '称号', target: '隐藏成就', amount: 1 });
+        break;
+    }
+
+    return rewards;
+  }
+
+  /**
+   * 外部调用：更新成就进度
+   */
+  updateAchievementProgress(
+    entity: any,
+    conditionType: AchievementConditionType,
+    target: string,
+    amount: number = 1
+  ): void {
+    if (!entity['achievement'] || !entity['notification']) return;
+    
+    const achievementComp = entity['achievement'] as AchievementComponent;
+    const notificationComp = entity['notification'] as NotificationComponent;
+    
+    // 更新进度，获取新解锁的成就
+    const newlyUnlocked = achievementComp.updateProgress(conditionType, target, amount);
+    
+    // 发送解锁通知
+    newlyUnlocked.forEach(achievement => {
+      notificationComp.sendNotification(
+        '成就解锁',
+        `🏆 成就解锁! [${achievement.rarity}] ${achievement.name}`,
+        achievement.description,
+        {
+          icon: achievement.icon,
+          duration: 5000,
+          priority: 10,
+          animation: 'bounce'
+        }
+      );
+
+      // 发放成就奖励
+      this.giveAchievementRewards(entity, achievement.rewards);
+    });
+  }
+
+  /**
+   * 发放成就奖励
+   */
+  private giveAchievementRewards(entity: any, rewards: any[]): void {
+    rewards.forEach(reward => {
+      switch (reward.type) {
+        case '资源':
+        case '金币':
+          if (entity['resource']) {
+            entity['resource'].addResource(reward.target || reward.type, reward.amount);
+            console.log(`   获得 ${reward.amount} ${reward.target || reward.type}`);
+          }
+          break;
+        case '经验':
+          if (entity['character']) {
+            entity['character'].addExperience(reward.amount);
+            console.log(`   获得 ${reward.amount} 经验值`);
+          }
+          break;
+        case '卡牌':
+          if (entity['deck']) {
+            console.log(`   获得卡牌: ${reward.target}`);
+          }
+          break;
+        case '头像框':
+        case '称号':
+          console.log(`   获得${reward.type}: ${reward.target}`);
+          break;
+      }
+    });
+  }
+}
+
+// ==========================================
+// 难度系统 - Difficulty System
+// ==========================================
+
+export class DifficultySystem extends BaseSystem {
+  constructor() {
+    super('难度管理', 35);
+    this.updateInterval = 2000;
+  }
+
+  getRequiredComponents(): string[] {
+    return ['difficulty', 'world', 'resource', 'notification'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const filteredEntities = this.filterEntities(entities);
+    
+    filteredEntities.forEach(entity => {
+      const difficultyComp = entity['difficulty'] as DifficultyComponent;
+      const worldComp = entity['world'] as WorldComponent;
+      const notificationComp = entity['notification'] as NotificationComponent;
+      
+      // 应用难度加成到世界属性
+      const currentDifficulty = difficultyComp.getCurrentDifficulty();
+      worldComp.events.forEach(event => {
+        if (event.type === '难度加成') {
+          event.effects = [
+            { property: 'resourceMultiplier', value: currentDifficulty.resourceMultiplier },
+            { property: 'productionMultiplier', value: currentDifficulty.productionMultiplier },
+            { property: 'enemyHealthMultiplier', value: currentDifficulty.enemyHealthMultiplier },
+            { property: 'enemyDamageMultiplier', value: currentDifficulty.enemyDamageMultiplier }
+          ];
+        }
+      });
+
+      // 检查是否可以提升难度
+      this.checkDifficultyUnlock(entity, difficultyComp, notificationComp);
+    });
+  }
+
+  /**
+   * 检查难度解锁条件
+   */
+  private checkDifficultyUnlock(entity: any, difficultyComp: DifficultyComponent, notificationComp: NotificationComponent): void {
+    difficultyComp.levels.forEach(level => {
+      if (level.unlocked) return;
+      
+      const condition = level.unlockCondition;
+      let conditionMet = false;
+      
+      switch (condition.type) {
+        case '难度通关':
+          // 检查是否通关了前一个难度
+          const prevLevel = parseInt(condition.target);
+          conditionMet = entity['gameState']?.highScore >= prevLevel * 1000;
+          break;
+        case '达到等级':
+          conditionMet = entity['character']?.level >= condition.amount;
+          break;
+        case '完成任务':
+          conditionMet = entity['quest']?.completedQuests.includes(condition.target) ?? false;
+          break;
+      }
+      
+      if (conditionMet) {
+        difficultyComp.unlockLevel(level.level);
+        notificationComp.sendNotification(
+          '系统提示',
+          `🔓 新难度解锁!`,
+          `难度 ${level.level} - ${level.name} 已解锁，奖励提升 ${Math.round((level.rewardMultiplier - 1) * 100)}%`,
+          {
+            icon: '🔼',
+            duration: 3000,
+            priority: 5
+          }
+        );
+      }
+    });
+  }
+
+  /**
+   * 切换难度
+   */
+  setDifficultyLevel(entity: any, level: number): boolean {
+    if (!entity['difficulty'] || !entity['notification']) return false;
+    
+    const difficultyComp = entity['difficulty'] as DifficultyComponent;
+    const notificationComp = entity['notification'] as NotificationComponent;
+    const levelConfig = difficultyComp.levels.find(l => l.level === level);
+    
+    if (!levelConfig || !levelConfig.unlocked) {
+      notificationComp.sendNotification(
+        '系统提示',
+        '❌ 难度未解锁',
+        `难度 ${level} 还未解锁，请先通关前置难度`,
+        { duration: 2000, priority: 2 }
+      );
+      return false;
+    }
+    
+    difficultyComp.currentLevel = level;
+    notificationComp.sendNotification(
+      '系统提示',
+      `🔼 难度已切换`,
+      `当前难度: ${level}级 ${levelConfig.name}，奖励提升 ${Math.round((levelConfig.rewardMultiplier - 1) * 100)}%`,
+      { duration: 3000, priority: 5 }
+    );
+    
+    return true;
+  }
+
+  /**
+   * 难度结算
+   */
+  difficultySettlement(entity: any): void {
+    if (!entity['difficulty'] || !entity['resource'] || !entity['notification']) return;
+    
+    const difficultyComp = entity['difficulty'] as DifficultyComponent;
+    const resourceComp = entity['resource'] as ResourceComponent;
+    const notificationComp = entity['notification'] as NotificationComponent;
+    const currentDifficulty = difficultyComp.getCurrentDifficulty();
+    
+    // 应用难度奖励倍数
+    const baseReward = 100 * currentDifficulty.rewardMultiplier;
+    resourceComp.addResource('金币', Math.floor(baseReward));
+    
+    notificationComp.sendNotification(
+      '奖励获得',
+      `🎉 难度结算奖励`,
+      `难度 ${currentDifficulty.level} 奖励: ${Math.floor(baseReward)} 金币`,
+      { duration: 3000, priority: 8 }
+    );
+
+    // 更新成就进度
+    const achievementSystem = SystemManager.getInstance().getSystem<AchievementSystem>('成就管理');
+    if (achievementSystem) {
+      achievementSystem.updateAchievementProgress(entity, '难度通关', currentDifficulty.level.toString(), 1);
+    }
+  }
+}
+
+// ==========================================
+// 通知系统 - Notification System
+// ==========================================
+
+export class NotificationSystem extends BaseSystem {
+  constructor() {
+    super('通知管理', 30);
+    this.updateInterval = 500;
+  }
+
+  getRequiredComponents(): string[] {
+    return ['notification'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const filteredEntities = this.filterEntities(entities);
+    
+    filteredEntities.forEach(entity => {
+      const notificationComp = entity['notification'] as NotificationComponent;
+      
+      // 清理过期通知
+      notificationComp.cleanupExpired();
+      
+      // 输出调试信息
+      const activeNotifications = notificationComp.getActiveNotifications();
+      if (activeNotifications.length > 0) {
+        activeNotifications.forEach(notify => {
+          console.log(`[${notify.type}] ${notify.title}: ${notify.message}`);
+        });
+      }
+    });
+  }
+
+  /**
+   * 发送任务进度通知
+   */
+  sendQuestProgressNotification(entity: any, questTitle: string, objective: string, current: number, total: number): void {
+    if (!entity['notification']) return;
+    
+    const notificationComp = entity['notification'] as NotificationComponent;
+    const progress = Math.round((current / total) * 100);
+    
+    notificationComp.sendNotification(
+      '任务进度',
+      `📋 任务进度更新`,
+      `[${questTitle}] ${objective}: ${current}/${total} (${progress}%)`,
+      { duration: 2000, priority: 3 }
+    );
+  }
+
+  /**
+   * 发送任务完成通知
+   */
+  sendQuestCompleteNotification(entity: any, questTitle: string, rewards: any[]): void {
+    if (!entity['notification']) return;
+    
+    const notificationComp = entity['notification'] as NotificationComponent;
+    const rewardText = rewards.map(r => `${r.amount}${r.target || r.type}`).join(', ');
+    
+    notificationComp.sendNotification(
+      '任务完成',
+      `✅ 任务完成!`,
+      `[${questTitle}] 已完成，获得奖励: ${rewardText}`,
+      { duration: 3000, priority: 8, animation: 'bounce' }
+    );
+  }
+}
+
+// ==========================================
+// 随机事件系统 - Event System
+// ==========================================
+export class EventSystem extends BaseSystem {
+  constructor() {
+    super('随机事件系统', 90);
+  }
+
+  getRequiredComponents(): string[] {
+    return ['eventSystem', 'identity'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(e => e.eventSystem && e.identity?.entityType === '世界');
+  }
+
+  update(entities: any[], dt: number): void {
+    const worldEntity = this.filterEntities(entities)[0];
+    if (!worldEntity) return;
+
+    const eventComp = worldEntity.eventSystem as EventSystemComponent;
+    
+    // 初始化事件配置
+    if (eventComp.eventConfig.length === 0) {
+      EVENTS_CONFIG.forEach(event => eventComp.registerEvent(event));
+      console.log('🎲 随机事件系统已初始化，共加载' + EVENTS_CONFIG.length + '个事件');
+    }
+  }
+
+  /**
+   * 在指定触发点触发随机事件
+   */
+  triggerEvent(triggerType: EventTrigger, playerEntity: any, worldEntity: any): GameEvent | null {
+    const eventComp = worldEntity.eventSystem as EventSystemComponent;
+    const playerLevel = playerEntity.character?.level ?? 1;
+
+    // 检查触发概率
+    if (Math.random() > eventComp.eventTriggerChance) {
+      return null;
+    }
+
+    const triggeredEvent = eventComp.triggerRandomEvent(triggerType, playerLevel);
+    if (triggeredEvent) {
+      console.log(`🎲 触发事件: ${triggeredEvent.name} - ${triggeredEvent.description}`);
+      this.applyEventEffects(triggeredEvent, playerEntity, worldEntity);
+    }
+
+    return triggeredEvent;
+  }
+
+  /**
+   * 应用事件效果
+   */
+  private applyEventEffects(event: GameEvent, playerEntity: any, worldEntity: any): void {
+    const resourceComp = playerEntity.resource as ResourceComponent;
+
+    event.effects.forEach(effect => {
+      switch (effect.type) {
+        case '资源变更':
+          if (effect.target === '所有') {
+            Object.keys(resourceComp.resources).forEach(type => {
+              const change = typeof effect.value === 'number' && effect.value < 1 
+                ? Math.floor(resourceComp.resources[type] * effect.value)
+                : effect.value as number;
+              if (change < 0) {
+                resourceComp.removeResource(type, Math.abs(change));
+              } else {
+                resourceComp.addResource(type, change);
+              }
+            });
+          } else {
+            const change = typeof effect.value === 'number' && effect.value < 1 
+              ? Math.floor(resourceComp.resources[effect.target] * effect.value)
+              : effect.value as number;
+            if (change < 0) {
+              resourceComp.removeResource(effect.target, Math.abs(change));
+            } else {
+              resourceComp.addResource(effect.target, change);
+            }
+          }
+          break;
+        case '生产效率变更':
+          // 生产效率变更效果在ProductionSystem中应用
+          break;
+        case '获得卡牌':
+          // 获得卡牌效果在CardSystem中应用
+          break;
+        case '失去卡牌':
+          // 失去卡牌效果在CardSystem中应用
+          break;
+        case '获得遗物':
+          // 获得遗物效果在RelicSystem中应用
+          break;
+      }
+    });
+  }
+
+  /**
+   * 回合结束时更新事件状态
+   */
+  endOfRoundUpdate(worldEntity: any): void {
+    const eventComp = worldEntity.eventSystem as EventSystemComponent;
+    eventComp.updateEvents();
+  }
+}
+
+// ==========================================
+// 遗物系统 - Relic System
+// ==========================================
+export class RelicSystem extends BaseSystem {
+  constructor() {
+    super('遗物系统', 85);
+  }
+
+  getRequiredComponents(): string[] {
+    return ['relic', 'identity'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(e => e.relic && e.identity?.entityType === '玩家');
+  }
+
+  update(entities: any[], dt: number): void {
+    const playerEntity = this.filterEntities(entities)[0];
+    if (!playerEntity) return;
+
+    const relicComp = playerEntity.relic as RelicComponent;
+    
+    // 初始化遗物配置
+    if (relicComp.relicConfig.length === 0) {
+      RELICS_CONFIG.forEach(relic => relicComp.registerRelic(relic));
+      console.log('💎 遗物系统已初始化，共加载' + RELICS_CONFIG.length + '个遗物');
+    }
+  }
+
+  /**
+   * 玩家获得遗物
+   */
+  addRelic(playerEntity: any, relicId: string): boolean {
+    const relicComp = playerEntity.relic as RelicComponent;
+    const success = relicComp.addRelic(relicId);
+    if (success) {
+      const relic = relicComp.relics.find(r => r.id === relicId);
+      console.log(`💎 获得遗物: ${relic?.name} - ${relic?.description}`);
+      this.applyRelicEffects(playerEntity);
+    }
+    return success;
+  }
+
+  /**
+   * 应用所有遗物的效果
+   */
+  applyRelicEffects(playerEntity: any): void {
+    const relicComp = playerEntity.relic as RelicComponent;
+    const resourceComp = playerEntity.resource as ResourceComponent;
+    const energyComp = playerEntity.energy as EnergyComponent;
+    const handComp = playerEntity.hand as HandComponent;
+
+    // 应用资源加成
+    const goldBonus = relicComp.getEffectSum('资源加成', '金币');
+    if (goldBonus > 0 && Number.isInteger(goldBonus)) {
+      resourceComp.addResource('金币', goldBonus);
+    }
+
+    // 应用能量上限提升
+    const energyBonus = relicComp.getEffectSum('特殊效果', '能量上限提升');
+    energyComp.max = 10 + energyBonus;
+
+    // 应用手牌上限提升
+    const handBonus = relicComp.getEffectSum('特殊效果', '手牌上限提升');
+    handComp.maxHandSize = 8 + handBonus;
+
+    // 应用存储上限提升
+    const storageBonus = relicComp.getEffectSum('资源加成', '存储上限');
+    Object.keys(resourceComp.maxStorage).forEach(type => {
+      resourceComp.maxStorage[type] = Math.floor(resourceComp.maxStorage[type] * (1 + storageBonus));
+    });
+  }
+
+  /**
+   * 获取所有生产加成
+   */
+  getProductionBonus(playerEntity: any, targetType: string): number {
+    const relicComp = playerEntity.relic as RelicComponent;
+    return relicComp.getEffectSum('生产加成', targetType);
+  }
+
+  /**
+   * 获取事件概率调整
+   */
+  getEventProbabilityModifier(playerEntity: any, eventType: string): number {
+    const relicComp = playerEntity.relic as RelicComponent;
+    return relicComp.getEffectSum('事件概率调整', eventType);
+  }
+}
+
+// ==========================================
+// 卡组管理系统 - Deck Management System
+// ==========================================
+export class DeckManagementSystem extends BaseSystem {
+  constructor() {
+    super('卡组管理系统', 80);
+  }
+
+  getRequiredComponents(): string[] {
+    return ['deck', 'identity'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(e => e.deck && e.identity?.entityType === '玩家');
+  }
+
+  update(entities: any[], dt: number): void {
+    // 不需要每帧更新
+  }
+
+  /**
+   * 删除卡牌
+   */
+  deleteCard(playerEntity: any, cardId: string): boolean {
+    const deckComp = playerEntity.deck as DeckComponent;
+    const success = deckComp.removeCardFromLibrary(cardId);
+    if (success) {
+      console.log(`🗑️  删除卡牌: ${cardId}`);
+    }
+    return success;
+  }
+
+  /**
+   * 升级卡牌
+   */
+  upgradeCard(playerEntity: any, cardId: string): boolean {
+    const deckComp = playerEntity.deck as DeckComponent;
+    const resourceComp = playerEntity.resource as ResourceComponent;
+    const relicComp = playerEntity.relic as RelicComponent;
+
+    const card = deckComp.library.find(c => c.identity?.uniqueId === cardId);
+    if (!card || !card.upgrade) return false;
+
+    // 计算升级消耗（考虑遗物效果）
+    const costReduction = Number(relicComp?.getEffectSum('特殊效果', '升级消耗减少') ?? 0);
+    const upgradeCost = { ...card.upgrade.upgradeCost };
+    
+    Object.keys(upgradeCost).forEach(type => {
+      upgradeCost[type] = Math.floor(upgradeCost[type] * (1 - costReduction));
+    });
+
+    // 检查资源是否足够
+    const canUpgrade = Object.entries(upgradeCost).every(
+      ([type, cost]) => resourceComp.resources[type] >= (cost as number)
+    );
+
+    if (!canUpgrade) return false;
+
+    // 扣除资源
+    Object.entries(upgradeCost).forEach(([type, cost]) => {
+      resourceComp.removeResource(type, cost as number);
+    });
+
+    // 升级卡牌
+    const success = deckComp.upgradeCard(cardId);
+    if (success) {
+      console.log(`⬆️  升级卡牌: ${card.identity.name} 到等级 ${card.identity.level}`);
+    }
+
+    return success;
+  }
+
+  /**
+   * 获取所有可升级的卡牌
+   */
+  getUpgradableCards(playerEntity: any): any[] {
+    const deckComp = playerEntity.deck as DeckComponent;
+    return deckComp.getUpgradableCards();
+  }
+}
+
+// ==========================================
+// 意图提示系统 - Intent Preview System
+// ==========================================
+export class IntentPreviewSystem extends BaseSystem {
+  constructor() {
+    super('意图提示系统', 75);
+  }
+
+  getRequiredComponents(): string[] {
+    return ['intentPreview', 'identity'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(e => e.intentPreview && e.identity?.entityType === '世界');
+  }
+
+  update(entities: any[], dt: number): void {
+    // 不需要每帧更新
+  }
+
+  /**
+   * 添加未来事件提示
+   */
+  addFutureIntent(worldEntity: any, intent: FutureIntent): void {
+    const intentComp = worldEntity.intentPreview as IntentPreviewComponent;
+    intentComp.addIntent(intent);
+    console.log(`🔮 添加意图提示: ${intent.name} 将在第 ${intent.round} 回合发生`);
+  }
+
+  /**
+   * 获取当前需要显示的意图
+   */
+  getCurrentIntents(worldEntity: any, currentRound: number): FutureIntent[] {
+    const intentComp = worldEntity.intentPreview as IntentPreviewComponent;
+    return intentComp.getCurrentIntents(currentRound);
+  }
+
+  /**
+   * 回合结束时更新意图状态
+   */
+  endOfRoundUpdate(worldEntity: any, currentRound: number): void {
+    const intentComp = worldEntity.intentPreview as IntentPreviewComponent;
+    intentComp.updateIntents(currentRound);
+
+    // 自动生成未来灾害/价格波动提示
+    this.generateFutureIntents(worldEntity, currentRound);
+  }
+
+  /**
+   * 生成未来事件提示
+   */
+  private generateFutureIntents(worldEntity: any, currentRound: number): void {
+    const eventComp = worldEntity.eventSystem as EventSystemComponent;
+    const intentComp = worldEntity.intentPreview as IntentPreviewComponent;
+
+    // 提前生成未来2回合可能发生的灾害事件
+    for (let i = 1; i <= intentComp.previewRounds; i++) {
+      const futureRound = currentRound + i;
+      
+      // 70%概率生成灾害预警
+      if (Math.random() < 0.7) {
+        const disasterEvents = eventComp.eventConfig.filter(e => e.type === '灾害');
+        const randomDisaster = disasterEvents[Math.floor(Math.random() * disasterEvents.length)];
+        
+        this.addFutureIntent(worldEntity, {
+          type: '灾害预警',
+          name: randomDisaster.name,
+          description: randomDisaster.description,
+          round: futureRound,
+          severity: '高'
+        });
+      }
+
+      // 50%概率生成价格波动提示
+      if (Math.random() < 0.5) {
+        const isRise = Math.random() > 0.5;
+        this.addFutureIntent(worldEntity, {
+          type: '价格波动',
+          name: isRise ? '作物价格上涨' : '作物价格下跌',
+          description: isRise ? '未来作物价格将上涨30%，建议提前储备' : '未来作物价格将下跌20%，建议尽快出售',
+          round: futureRound,
+          severity: isRise ? '低' : '中'
+        });
+      }
+    }
   }
 }
 
@@ -1281,7 +2350,14 @@ export function createDefaultSystems(): SystemManager {
     .registerSystem(new ComboSystem())
     .registerSystem(new WorldSystem())
     .registerSystem(new GameStateSystem())
-    .registerSystem(new QuestSystem());
+    .registerSystem(new QuestSystem())
+    .registerSystem(new AchievementSystem())
+    .registerSystem(new DifficultySystem())
+    .registerSystem(new NotificationSystem())
+    .registerSystem(new EventSystem())
+    .registerSystem(new RelicSystem())
+    .registerSystem(new DeckManagementSystem())
+    .registerSystem(new IntentPreviewSystem());
 
   return systemManager;
 }
