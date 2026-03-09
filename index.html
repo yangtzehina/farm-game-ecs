@@ -419,6 +419,28 @@
                 </div>
             </div>
 
+            <!-- 金币目标面板 -->
+            <div id="goldTargetPanel" style="background: #fffde7; border-radius: 10px; padding: 10px; flex-shrink: 0;">
+                <h4 style="margin: 0 0 8px 0; font-size: 0.9em;">💰 金币目标</h4>
+                <div style="font-size: 0.85em; margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>今日目标:</span>
+                        <span id="dailyTargetValue">0</span>
+                    </div>
+                    <div style="background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;">
+                        <div id="dailyTargetProgress" style="height: 100%; width: 0%; background: #ffc107; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                        <span id="dailyTargetCurrent">0</span>
+                        <span id="dailyTargetPercent">0%</span>
+                    </div>
+                </div>
+                <div style="font-size: 0.8em; color: #f57c00;">
+                    <div id="phaseTargetInfo">第1周目标: 0/0</div>
+                    <div style="margin-top: 2px;">连续完成: <span id="goldStreak">0</span>天</div>
+                </div>
+            </div>
+
             <!-- 组合提示 -->
             <div id="comboHint" style="display: none;">
                 <h4>💡 可合成组合</h4>

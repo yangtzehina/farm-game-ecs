@@ -6,6 +6,16 @@ declare class FarmGameEngine {
     gameRunning: boolean;
     canvas: HTMLElement;
     ctx: any;
+    cardLibrary: {
+        id: string;
+        name: string;
+        icon: string;
+        cost: number;
+        desc: string;
+        rarity: string;
+        type: string;
+        sellPrice: number;
+    }[];
     gameState: {
         energy: number;
         maxEnergy: number;
@@ -14,70 +24,26 @@ declare class FarmGameEngine {
         level: number;
         exp: number;
         difficulty: string;
+        freeRefreshUsed: boolean;
         resources: {
             wheat: number;
             carrot: number;
+            potato: number;
+            tomato: number;
             chicken: number;
+            duck: number;
+            sheep: number;
+            pig: number;
             egg: number;
+            duckEgg: number;
             milk: number;
+            wool: number;
+            pork: number;
+            apple: number;
+            flour: number;
         };
-        handCards: ({
-            id: string;
-            name: string;
-            icon: string;
-            cost: number;
-            desc: string;
-            level: number;
-            upgradeCost: {
-                money: number;
-                wheat: number;
-                carrot?: undefined;
-                egg?: undefined;
-                milk?: undefined;
-            };
-        } | {
-            id: string;
-            name: string;
-            icon: string;
-            cost: number;
-            desc: string;
-            level: number;
-            upgradeCost: {
-                money: number;
-                carrot: number;
-                wheat?: undefined;
-                egg?: undefined;
-                milk?: undefined;
-            };
-        } | {
-            id: string;
-            name: string;
-            icon: string;
-            cost: number;
-            desc: string;
-            level: number;
-            upgradeCost: {
-                money: number;
-                egg: number;
-                wheat?: undefined;
-                carrot?: undefined;
-                milk?: undefined;
-            };
-        } | {
-            id: string;
-            name: string;
-            icon: string;
-            cost: number;
-            desc: string;
-            level: number;
-            upgradeCost: {
-                money: number;
-                milk: number;
-                wheat?: undefined;
-                carrot?: undefined;
-                egg?: undefined;
-            };
-        })[];
+        handCards: any[];
+        shopCards: any[];
         placedCards: any[];
         relics: any[];
         tasks: ({
@@ -150,13 +116,19 @@ declare class FarmGameEngine {
     }[];
     log(...args: any[]): void;
     initialize(): void;
+    drawInitialCards(): void;
+    refreshShop(): void;
+    refreshHandCards(): void;
+    buyCard(cardId: any): void;
+    updateHandCardsUI(): void;
+    updateShopUI(): void;
+    updateUI(): void;
     setupCanvas(): void;
     setupDragAndDrop(): void;
     playCard(card: any, x: any, y: any): void;
     checkLevelUp(): void;
     checkCombos(): void;
     makeCombo(comboResult: any): void;
-    updateUI(): void;
     drawTestScreen(): void;
     drawGameScreen(): void;
     drawCloud(x: any, y: any): void;
@@ -194,5 +166,6 @@ declare class FarmGameEngine {
     clearCache(): void;
     saveGameState(): void;
     loadGameState(): void;
+    clearCacheAndReload(): void;
     autoSave(): void;
 }
