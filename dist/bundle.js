@@ -14,6 +14,8 @@ class FarmGameEngine {
     this.gameRunning = false;
     this.canvas = null;
     this.ctx = null;
+    // 卡牌图片缓存
+    this.cardImages = {};
 
     // 经济系统数据
     this.economy = {
@@ -30,7 +32,7 @@ class FarmGameEngine {
     {
       id: 'wheat',
       name: '小麦种子',
-      icon: '🌾',
+      icon: 'assets/cards/CARD_001_wheat.png',
       cost: 1,
       desc: '种植获得小麦',
       rarity: 'common',
@@ -39,7 +41,7 @@ class FarmGameEngine {
     }, {
       id: 'carrot',
       name: '胡萝卜种子',
-      icon: '🥕',
+      icon: 'assets/cards/CARD_003_carrot.png',
       cost: 1,
       desc: '种植获得胡萝卜',
       rarity: 'common',
@@ -48,7 +50,7 @@ class FarmGameEngine {
     }, {
       id: 'potato',
       name: '土豆种子',
-      icon: '🥔',
+      icon: 'assets/cards/CARD_009_potato.png',
       cost: 1,
       desc: '种植获得土豆',
       rarity: 'common',
@@ -57,7 +59,7 @@ class FarmGameEngine {
     }, {
       id: 'tomato',
       name: '番茄种子',
-      icon: '🍅',
+      icon: 'assets/cards/CARD_010_tomato.png',
       cost: 1,
       desc: '种植获得番茄',
       rarity: 'common',
@@ -66,7 +68,7 @@ class FarmGameEngine {
     }, {
       id: 'chicken',
       name: '小鸡',
-      icon: '🐔',
+      icon: 'assets/cards/CARD_021_chick.png',
       cost: 2,
       desc: '养殖获得鸡蛋',
       rarity: 'common',
@@ -75,7 +77,7 @@ class FarmGameEngine {
     }, {
       id: 'duck',
       name: '小鸭',
-      icon: '🦆',
+      icon: 'assets/cards/CARD_023_duckling.png',
       cost: 2,
       desc: '养殖获得鸭蛋',
       rarity: 'common',
@@ -84,7 +86,7 @@ class FarmGameEngine {
     }, {
       id: 'cow',
       name: '奶牛',
-      icon: '🐄',
+      icon: 'assets/cards/CARD_065_cow.png',
       cost: 3,
       desc: '养殖获得牛奶',
       rarity: 'common',
@@ -93,7 +95,7 @@ class FarmGameEngine {
     }, {
       id: 'sheep',
       name: '绵羊',
-      icon: '🐑',
+      icon: 'assets/cards/CARD_064_sheep.png',
       cost: 3,
       desc: '养殖获得羊毛',
       rarity: 'common',
@@ -102,7 +104,7 @@ class FarmGameEngine {
     }, {
       id: 'watering',
       name: '浇水',
-      icon: '💧',
+      icon: 'assets/cards/CARD_031_watering_can.png',
       cost: 1,
       desc: '所有作物产量+50%，持续1天',
       rarity: 'common',
@@ -111,7 +113,7 @@ class FarmGameEngine {
     }, {
       id: 'fertilizer',
       name: '肥料',
-      icon: '💩',
+      icon: 'assets/cards/CARD_034_fertilizer.png',
       cost: 1,
       desc: '作物生长速度翻倍，持续1天',
       rarity: 'common',
@@ -122,7 +124,7 @@ class FarmGameEngine {
     {
       id: 'goldenWheat',
       name: '黄金小麦',
-      icon: '🌾',
+      icon: 'assets/cards/CARD_109_golden_wheat.png',
       cost: 2,
       desc: '种植获得3倍产量的小麦',
       rarity: 'uncommon',
@@ -131,7 +133,7 @@ class FarmGameEngine {
     }, {
       id: 'appleTree',
       name: '苹果树',
-      icon: '🍎',
+      icon: 'assets/cards/CARD_057_peach.png',
       cost: 3,
       desc: '每天产出苹果，持续10天',
       rarity: 'uncommon',
@@ -140,7 +142,7 @@ class FarmGameEngine {
     }, {
       id: 'pig',
       name: '小猪',
-      icon: '🐷',
+      icon: 'assets/cards/CARD_063_pig.png',
       cost: 4,
       desc: '养殖获得猪肉，价值是鸡肉的3倍',
       rarity: 'uncommon',
@@ -149,7 +151,7 @@ class FarmGameEngine {
     }, {
       id: 'mill',
       name: '磨坊',
-      icon: '🏭',
+      icon: 'assets/cards/CARD_105_processing_plant.png',
       cost: 4,
       desc: '所有小麦自动加工成面粉，售价翻倍',
       rarity: 'uncommon',
@@ -160,7 +162,7 @@ class FarmGameEngine {
     {
       id: 'greenHouse',
       name: '温室',
-      icon: '🏡',
+      icon: 'assets/cards/CARD_080_greenhouse.png',
       cost: 5,
       desc: '所有作物不受天气影响，产量+100%',
       rarity: 'rare',
@@ -169,7 +171,7 @@ class FarmGameEngine {
     }, {
       id: 'autoHarvester',
       name: '自动收割机',
-      icon: '🚜',
+      icon: 'assets/cards/CARD_101_auto_harvester.png',
       cost: 5,
       desc: '每天自动收割所有成熟作物，不需要手动操作',
       rarity: 'rare',
@@ -180,7 +182,7 @@ class FarmGameEngine {
     {
       id: 'farmHeart',
       name: '农庄之心',
-      icon: '❤️',
+      icon: 'assets/cards/CARD_111_tree_of_life.png',
       cost: 6,
       desc: '所有资源产量永久+100%，全局生效',
       rarity: 'legendary',
@@ -360,12 +362,23 @@ class FarmGameEngine {
     this.setupDragAndDrop();
     this.drawInitialCards();
     this.refreshShop();
+    // 预加载所有卡牌图片
+    this.preloadCardImages();
     this.loadGameState();
     this.updateUI();
     this.updateHandCardsUI();
     this.updateShopUI();
     this.drawGameScreen();
     this.autoSave();
+  }
+
+  // 预加载所有卡牌图片
+  preloadCardImages() {
+    this.cardLibrary.forEach(card => {
+      const img = new Image();
+      img.src = card.icon;
+      this.cardImages[card.id] = img;
+    });
   }
 
   // 抽初始手牌
@@ -504,7 +517,7 @@ class FarmGameEngine {
     };
     handArea.innerHTML = this.gameState.handCards.map(card => `
       <div class="card ${rarityClass[card.rarity]}" draggable="true" data-card-id="${card.id}" data-cost="${card.cost}">
-        <div class="icon">${card.icon}</div>
+        <div class="icon"><img src="${card.icon}" style="width: 40px; height: 56px; object-fit: contain;" /></div>
         <div class="name">${card.name}</div>
         <div class="desc">${card.desc}</div>
         <div class="level" style="color: ${card.rarity === 'common' ? '#3498db' : card.rarity === 'uncommon' ? '#27ae60' : card.rarity === 'rare' ? '#9b59b6' : '#e67e22'};">Lv.${card.level}</div>
@@ -524,7 +537,7 @@ class FarmGameEngine {
     };
     shopCards.innerHTML = this.gameState.shopCards.map(card => `
       <div class="shop-card ${rarityClass[card.rarity]}">
-        <div class="shop-card-icon">${card.icon}</div>
+        <div class="shop-card-icon"><img src="${card.icon}" style="width: 36px; height: 50px; object-fit: contain;" /></div>
         <div class="shop-card-info">
           <div class="shop-card-name">${card.name}</div>
           <div class="shop-card-desc">${card.desc}</div>
@@ -869,18 +882,22 @@ class FarmGameEngine {
     this.ctx.lineWidth = 2;
     this.ctx.strokeRect(card.x, card.y, 100, 140);
 
+    // 卡牌图标
+    const img = this.cardImages[card.id];
+    if (img && img.complete) {
+      this.ctx.drawImage(img, card.x + 25, card.y + 10, 50, 70);
+    }
+
     // 卡牌内容
     this.ctx.fillStyle = '#2c3e50';
-    this.ctx.font = '30px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText(card.icon, card.x + 50, card.y + 40);
     this.ctx.font = 'bold 14px Arial';
-    this.ctx.fillText(card.name, card.x + 50, card.y + 70);
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(card.name, card.x + 50, card.y + 95);
     this.ctx.font = '12px Arial';
     this.ctx.fillStyle = '#7f8c8d';
-    this.ctx.fillText(card.desc, card.x + 50, card.y + 95);
+    this.ctx.fillText(card.desc, card.x + 50, card.y + 115);
     this.ctx.fillStyle = '#f39c12';
-    this.ctx.fillText(`⚡ ${card.cost}`, card.x + 50, card.y + 120);
+    this.ctx.fillText(`⚡ ${card.cost}`, card.x + 50, card.y + 135);
   }
   showMessage(text, color) {
     const messageEl = document.createElement('div');
