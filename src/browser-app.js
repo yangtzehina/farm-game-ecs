@@ -316,19 +316,19 @@ class FarmGameEngine {
     // 更新资源
     document.getElementById('wheatCount').textContent = this.gameState.resources.wheat;
     document.getElementById('carrotCount').textContent = this.gameState.resources.carrot;
-    document.getElementById('potatoCount').textContent = this.gameState.resources.potato;
-    document.getElementById('tomatoCount').textContent = this.gameState.resources.tomato;
+    document.getElementById('potatoCount').textContent = this.gameState.resources.potato || 0;
+    document.getElementById('tomatoCount').textContent = this.gameState.resources.tomato || 0;
     document.getElementById('chickenCount').textContent = this.gameState.resources.chicken;
-    document.getElementById('duckCount').textContent = this.gameState.resources.duck;
-    document.getElementById('sheepCount').textContent = this.gameState.resources.sheep;
-    document.getElementById('pigCount').textContent = this.gameState.resources.pig;
+    document.getElementById('duckCount').textContent = this.gameState.resources.duck || 0;
+    document.getElementById('sheepCount').textContent = this.gameState.resources.sheep || 0;
+    document.getElementById('pigCount').textContent = this.gameState.resources.pig || 0;
     document.getElementById('eggCount').textContent = this.gameState.resources.egg;
-    document.getElementById('duckEggCount').textContent = this.gameState.resources.duckEgg;
+    document.getElementById('duckEggCount').textContent = this.gameState.resources.duckEgg || 0;
     document.getElementById('milkCount').textContent = this.gameState.resources.milk;
-    document.getElementById('woolCount').textContent = this.gameState.resources.wool;
-    document.getElementById('porkCount').textContent = this.gameState.resources.pork;
-    document.getElementById('appleCount').textContent = this.gameState.resources.apple;
-    document.getElementById('flourCount').textContent = this.gameState.resources.flour;
+    document.getElementById('woolCount').textContent = this.gameState.resources.wool || 0;
+    document.getElementById('porkCount').textContent = this.gameState.resources.pork || 0;
+    document.getElementById('appleCount').textContent = this.gameState.resources.apple || 0;
+    document.getElementById('flourCount').textContent = this.gameState.resources.flour || 0;
 
     // 更新金币目标
     this.updateGoldTarget();
@@ -1161,26 +1161,63 @@ class FarmGameEngine {
         energy: 3,
         maxEnergy: 5,
         day: 1,
-        money: 100,
+        money: 200,
         level: 1,
         exp: 0,
+        difficulty: 'normal',
+        freeRefreshUsed: false,
         resources: {
           wheat: 0,
           carrot: 0,
+          potato: 0,
+          tomato: 0,
           chicken: 0,
+          duck: 0,
+          sheep: 0,
+          pig: 0,
           egg: 0,
-          milk: 0
+          duckEgg: 0,
+          milk: 0,
+          wool: 0,
+          pork: 0,
+          apple: 0,
+          flour: 0
         },
-        handCards: [
-          { id: 'wheat', name: '小麦种子', icon: '🌾', cost: 1, desc: '种植获得小麦' },
-          { id: 'carrot', name: '胡萝卜种子', icon: '🥕', cost: 1, desc: '种植获得胡萝卜' },
-          { id: 'chicken', name: '小鸡', icon: '🐔', cost: 2, desc: '养殖获得鸡蛋' },
-          { id: 'cow', name: '奶牛', icon: '🐄', cost: 3, desc: '养殖获得牛奶' }
+        handCards: [],
+        shopCards: [],
+        placedCards: [],
+        relics: [],
+        tasks: [
+          { id: 'task1', title: '种植10颗小麦', description: '种植10颗小麦完成任务', progress: 0, target: 10, reward: { money: 100, exp: 50 }, completed: false },
+          { id: 'task2', title: '获得5个鸡蛋', description: '养殖小鸡获得5个鸡蛋', progress: 0, target: 5, reward: { money: 150, exp: 80 }, completed: false },
+          { id: 'task3', title: '升到5级', description: '提升等级到5级', progress: 0, target: 5, reward: { relic: { id: 'goldenHoe', name: '金锄头', icon: '⛏️', description: '传说中的金锄头', effect: '小麦产量+50%' } }, completed: false }
         ],
-        placedCards: []
+        achievements: [
+          { id: 'ach1', name: '新手农民', description: '完成第一局游戏', icon: '🌱', unlocked: false },
+          { id: 'ach2', name: '小麦大亨', description: '累计种植100颗小麦', icon: '🌾', unlocked: false, progress: 0, target: 100 },
+          { id: 'ach3', name: '养殖专家', description: '拥有10只鸡', icon: '🐔', unlocked: false, progress: 0, target: 10 },
+          { id: 'ach4', name: '百万富翁', description: '累计获得1000金币', icon: '💰', unlocked: false, progress: 0, target: 1000 },
+          { id: 'ach5', name: '满级大佬', description: '升到10级', icon: '⭐', unlocked: false, progress: 0, target: 10 }
+        ]
       };
+      // 重置经济系统
+      if (this.economy) {
+        this.economy = {
+          dailyTarget: 0,
+          currentGold: 0,
+          currentStage: 1,
+          streakDays: 0,
+          lastUpdateDay: 0,
+          targetCompleted: false
+        };
+      }
       localStorage.removeItem('farmGameSave');
+      // 抽初始手牌
+      this.drawInitialCards();
+      this.refreshShop();
       this.updateUI();
+      this.updateHandCardsUI();
+      this.updateShopUI();
       this.checkCombos();
       this.drawGameScreen();
       this.showMessage('✅ 游戏已重置', '#27ae60');
@@ -1227,6 +1264,68 @@ class FarmGameEngine {
         this.saveGameState();
       }
     }, 10000); // 10秒自动保存一次
+  }
+
+  // ==========================================
+  // 经济系统 - 金币目标
+  // ==========================================
+  // 计算每日目标金币：对数增长曲线
+  calculateDailyTarget(day) {
+    return Math.floor(100 + 150 * Math.log(day + 1));
+  }
+
+  // 更新金币目标进度
+  updateGoldTarget() {
+    if (!this.economy) {
+      this.economy = {
+        dailyTarget: 0,
+        currentGold: 0,
+        currentStage: 1,
+        streakDays: 0,
+        lastUpdateDay: 0,
+        targetCompleted: false
+      };
+    }
+    
+    if (this.economy.lastUpdateDay !== this.gameState.day) {
+      // 新的一天，计算新目标
+      this.economy.dailyTarget = this.calculateDailyTarget(this.gameState.day);
+      this.economy.currentGold = 0;
+      this.economy.currentStage = Math.ceil(this.gameState.day / 7);
+      this.economy.lastUpdateDay = this.gameState.day;
+    }
+
+    // 校验异常：单日获得超过目标3倍视为异常
+    const earnedToday = this.gameState.money - (this.economy.currentGold || 0);
+    if (earnedToday > this.economy.dailyTarget * 3) {
+      this.showMessage('⚠️ 检测到异常金币增长，已限制进度', '#e74c3c');
+      this.gameState.money = this.economy.currentGold + Math.floor(this.economy.dailyTarget * 0.1);
+    }
+
+    this.economy.currentGold = this.gameState.money;
+    const percent = Math.min(100, Math.floor((this.economy.currentGold / this.economy.dailyTarget) * 100));
+
+    // 更新UI
+    if (document.getElementById('dailyTarget')) {
+      document.getElementById('dailyTarget').textContent = this.economy.dailyTarget;
+      document.getElementById('currentGold').textContent = this.economy.currentGold;
+      document.getElementById('targetPercent').textContent = `${percent}%`;
+      document.getElementById('targetProgress').style.width = `${percent}%`;
+      document.getElementById('currentStage').textContent = this.economy.currentStage;
+      document.getElementById('streakDays').textContent = this.economy.streakDays;
+    }
+
+    // 检查是否完成每日目标
+    if (percent >= 100 && !this.economy.targetCompleted) {
+      this.economy.targetCompleted = true;
+      this.economy.streakDays += 1;
+      // 发放奖励：10%额外金币+免费刷新
+      const reward = Math.floor(this.economy.dailyTarget * 0.1);
+      this.gameState.money += reward;
+      this.gameState.freeRefreshUsed = false;
+      this.showMessage(`🎉 今日目标完成！获得${reward}金币奖励+免费刷新机会！`, '#27ae60');
+      this.saveGameState();
+    }
   }
 }
 
