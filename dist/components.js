@@ -87,7 +87,7 @@ export class ResourceComponent {
         Object.assign(this, config);
     }
     addResource(type, amount) {
-        if (!this.resources[type])
+        if (this.resources[type] === undefined)
             return false;
         if (this.resources[type] + amount > this.maxStorage[type])
             return false;
@@ -95,7 +95,7 @@ export class ResourceComponent {
         return true;
     }
     removeResource(type, amount) {
-        if (!this.resources[type])
+        if (this.resources[type] === undefined)
             return false;
         if (this.resources[type] - amount < 0)
             return false;
@@ -429,7 +429,8 @@ export class EnergyComponent {
         Object.assign(this, config);
     }
     spend(amount) {
-        if (amount < 0) return false;
+        if (amount < 0)
+            return false;
         if (this.current >= amount) {
             this.current -= amount;
             return true;
@@ -1097,6 +1098,256 @@ DeckComponent.prototype.getUpgradableCards = function () {
         card.identity.level < 10 // 最高等级10
     );
 };
+/**
+ * GoldTargetComponent - 长线金币目标系统组件
+ * 实现对数成长曲线的每日/阶段金币目标
+ */
+export class GoldTargetComponent {
+    constructor(config = {}) {
+        // 配置参数
+        this.baseDailyTarget = 100; // 第1天基础目标
+        this.logBase = Math.E; // 对数基数
+        this.growthMultiplier = 150; // 成长系数
+        this.phaseLength = 7; // 阶段长度（天）
+        this.phaseRewardMultiplier = 2.5; // 阶段奖励倍数
+        // 状态数据
+        this.dailyTargets = [];
+        this.phases = [];
+        this.totalGoldEarned = 0; // 历史总金币获得
+        this.currentStreak = 0; // 连续完成天数
+        this.maxStreak = 0; // 最高连续完成天数
+        this.lastClaimedDay = 0; // 上次领取奖励的天数
+        // 异常检测参数
+        this.abnormalThreshold = 3.0; // 异常阈值：超过目标3倍视为异常
+        this.abnormalRecords = [];
+        Object.assign(this, config);
+        this.initializePhases();
+    }
+    /**
+     * 初始化阶段目标
+     */
+    initializePhases() {
+        // 预创建12个阶段（12周）
+        for (let i = 1; i <= 12; i++) {
+            const startDay = (i - 1) * this.phaseLength + 1;
+            const endDay = i * this.phaseLength;
+            const baseTarget = this.calculatePhaseBaseTarget(i);
+            this.phases.push({
+                id: `phase_${i}`,
+                name: `第${i}周目标`,
+                startDay,
+                endDay,
+                baseTarget,
+                rewards: this.generatePhaseRewards(i),
+                completed: false,
+                claimed: false
+            });
+        }
+    }
+    /**
+     * 计算指定天数的每日金币目标（对数成长曲线）
+     * 公式：target = baseDailyTarget + growthMultiplier * ln(day)
+     */
+    calculateDailyTarget(day) {
+        if (day <= 0)
+            day = 1;
+        const target = this.baseDailyTarget + this.growthMultiplier * Math.log(day + 1) / Math.log(this.logBase);
+        return Math.round(target);
+    }
+    /**
+     * 计算阶段基础目标
+     */
+    calculatePhaseBaseTarget(phaseIndex) {
+        let total = 0;
+        const startDay = (phaseIndex - 1) * this.phaseLength + 1;
+        const endDay = phaseIndex * this.phaseLength;
+        for (let day = startDay; day <= endDay; day++) {
+            total += this.calculateDailyTarget(day);
+        }
+        return Math.round(total * 0.9); // 阶段目标比每日总和略低，降低难度
+    }
+    /**
+     * 生成阶段奖励
+     */
+    generatePhaseRewards(phaseIndex) {
+        const rarity = phaseIndex <= 4 ? '普通' : phaseIndex <= 8 ? '稀有' : '史诗';
+        return [
+            {
+                type: '资源',
+                target: '金币',
+                amount: Math.round(100 * phaseIndex * this.phaseRewardMultiplier)
+            },
+            {
+                type: '道具',
+                target: '高级肥料',
+                amount: phaseIndex,
+                rarity
+            }
+        ];
+    }
+    /**
+     * 生成每日奖励
+     */
+    generateDailyRewards(day) {
+        return [
+            {
+                type: '资源',
+                target: '金币',
+                amount: Math.round(this.calculateDailyTarget(day) * 0.1)
+            },
+            {
+                type: '资源',
+                target: '木材',
+                amount: Math.round(10 + day * 2)
+            }
+        ];
+    }
+    /**
+     * 获取或创建指定天数的每日目标
+     */
+    getDailyTarget(day) {
+        let target = this.dailyTargets.find(t => t.day === day);
+        if (!target) {
+            target = {
+                day,
+                target: this.calculateDailyTarget(day),
+                current: 0,
+                completed: false,
+                claimed: false,
+                rewards: this.generateDailyRewards(day)
+            };
+            this.dailyTargets.push(target);
+        }
+        return target;
+    }
+    /**
+     * 更新每日目标进度
+     * @param goldAmount 新增金币数量
+     * @param currentDay 当前游戏天数
+     */
+    updateProgress(goldAmount, currentDay) {
+        // 累计总金币
+        this.totalGoldEarned += goldAmount;
+        // 获取当前日目标
+        const dailyTarget = this.getDailyTarget(currentDay);
+        let dailyCompleted = false;
+        let phaseCompleted = null;
+        let isAbnormal = false;
+        // 异常检测
+        if (goldAmount > dailyTarget.target * this.abnormalThreshold) {
+            isAbnormal = true;
+            this.abnormalRecords.push({
+                day: currentDay,
+                goldAmount,
+                target: dailyTarget.target,
+                timestamp: Date.now(),
+                reason: `单次日获得金币${goldAmount}超过当日目标${dailyTarget.target}的${this.abnormalThreshold}倍`
+            });
+            // 异常情况下只计入目标金额的10%，防止作弊
+            goldAmount = Math.round(dailyTarget.target * 0.1);
+        }
+        if (!dailyTarget.completed) {
+            dailyTarget.current = Math.min(dailyTarget.current + goldAmount, dailyTarget.target * 2);
+            // 检查是否完成每日目标
+            if (dailyTarget.current >= dailyTarget.target && !dailyTarget.completed) {
+                dailyTarget.completed = true;
+                dailyCompleted = true;
+                this.currentStreak++;
+                this.maxStreak = Math.max(this.maxStreak, this.currentStreak);
+            }
+        }
+        // 检查阶段目标完成情况
+        const currentPhase = this.getCurrentPhase(currentDay);
+        if (currentPhase && !currentPhase.completed) {
+            const phaseTotal = this.calculatePhaseProgress(currentPhase);
+            if (phaseTotal >= currentPhase.baseTarget) {
+                currentPhase.completed = true;
+                phaseCompleted = currentPhase;
+            }
+        }
+        return { dailyCompleted, phaseCompleted, isAbnormal };
+    }
+    /**
+     * 获取当前所属阶段
+     */
+    getCurrentPhase(currentDay) {
+        return this.phases.find(phase => currentDay >= phase.startDay && currentDay <= phase.endDay) || null;
+    }
+    /**
+     * 计算阶段目标进度
+     */
+    calculatePhaseProgress(phase) {
+        let total = 0;
+        for (let day = phase.startDay; day <= phase.endDay; day++) {
+            const daily = this.getDailyTarget(day);
+            total += Math.min(daily.current, daily.target);
+        }
+        return total;
+    }
+    /**
+     * 领取每日奖励
+     */
+    claimDailyReward(day) {
+        const target = this.getDailyTarget(day);
+        if (!target.completed || target.claimed)
+            return false;
+        target.claimed = true;
+        this.lastClaimedDay = day;
+        return target.rewards;
+    }
+    /**
+     * 领取阶段奖励
+     */
+    claimPhaseReward(phaseId) {
+        const phase = this.phases.find(p => p.id === phaseId);
+        if (!phase || !phase.completed || phase.claimed)
+            return false;
+        phase.claimed = true;
+        return phase.rewards;
+    }
+    /**
+     * 检查连续天数是否中断（新的一天开始时调用）
+     */
+    checkStreakBreak(currentDay) {
+        if (currentDay <= 1)
+            return false;
+        const previousDay = currentDay - 1;
+        const prevTarget = this.getDailyTarget(previousDay);
+        if (!prevTarget.completed) {
+            const oldStreak = this.currentStreak;
+            this.currentStreak = 0;
+            console.log(`🔥 连续完成天数中断，之前连续${oldStreak}天`);
+            return true;
+        }
+        return false;
+    }
+    /**
+     * 获取当前进度统计
+     */
+    getStats() {
+        const completedDaily = this.dailyTargets.filter(t => t.completed).length;
+        const completedPhases = this.phases.filter(p => p.completed).length;
+        return {
+            totalGoldEarned: this.totalGoldEarned,
+            currentStreak: this.currentStreak,
+            maxStreak: this.maxStreak,
+            completedDailyCount: completedDaily,
+            totalDays: this.dailyTargets.length,
+            completedPhaseCount: completedPhases,
+            totalPhases: this.phases.length,
+            completionRate: this.dailyTargets.length > 0
+                ? Math.round((completedDaily / this.dailyTargets.length) * 100)
+                : 0
+        };
+    }
+    /**
+     * 获取异常记录
+     */
+    getAbnormalRecords(limit = 10) {
+        return [...this.abnormalRecords].sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
+    }
+}
+GoldTargetComponent.TYPE = 'goldTarget';
 export const COMPONENT_REGISTRY = {
     'identity': IdentityComponent,
     'position': PositionComponent,
@@ -1125,7 +1376,8 @@ export const COMPONENT_REGISTRY = {
     'notification': NotificationComponent,
     'eventSystem': EventSystemComponent,
     'relic': RelicComponent,
-    'intentPreview': IntentPreviewComponent
+    'intentPreview': IntentPreviewComponent,
+    'goldTarget': GoldTargetComponent
 };
 // ==========================================
 // 实体工厂 - Entity Factory
@@ -1215,7 +1467,8 @@ export class EntityFactory {
             'combo': new ComboComponent(config.combo),
             'achievement': new AchievementComponent(config.achievement),
             'difficulty': new DifficultyComponent(config.difficulty),
-            'notification': new NotificationComponent(config.notification)
+            'notification': new NotificationComponent(config.notification),
+            'goldTarget': new GoldTargetComponent(config.goldTarget)
         };
         return entity;
     }

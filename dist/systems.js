@@ -5,6 +5,7 @@
  * 按照Data-Oriented Design原则设计
  * 重点在于数据处理和组件交互
  */
+import { EntityFactory } from './components';
 import { EVENTS_CONFIG } from './events.config';
 import { RELICS_CONFIG } from './relics.config';
 // ==========================================
@@ -609,12 +610,15 @@ export class ComboSystem extends BaseSystem {
     }
     update(entities, dt) {
         const filteredEntities = this.filterEntities(entities);
+        if (filteredEntities.length === 0)
+            return;
+        // 获取所有已打出的卡牌（场上的实体）
+        // 将过滤操作移出循环，避免对每个玩家重复执行
+        const fieldCards = entities.filter(e => e['card'] && e['position']);
         filteredEntities.forEach(player => {
             const comboComp = player['combo'];
             // 更新组合持续时间
             comboComp.update(dt);
-            // 获取所有已打出的卡牌（场上的实体）
-            const fieldCards = entities.filter(e => e['card'] && e['position']);
             // 检查所有组合条件
             this.COMBO_CONFIG.forEach(comboConfig => {
                 const isConditionMet = this.checkComboCondition(comboConfig, fieldCards);
@@ -658,6 +662,21 @@ export class ComboSystem extends BaseSystem {
     }
     applyComboEffects(player, comboComp, entities) {
         const activeCombos = comboComp.getActiveCombos();
+        // 先恢复所有实体的原始状态，清除之前的组合效果
+        entities.forEach(entity => {
+            if (entity['production']) {
+                // 恢复原始效率
+                if (entity['production']['originalEfficiency']) {
+                    entity['production']['efficiency'] = entity['production']['originalEfficiency'];
+                    delete entity['production']['originalEfficiency'];
+                }
+                // 关闭自动收集
+                if (entity['animal'] && entity['production']['automation']) {
+                    entity['production']['automation'] = false;
+                }
+            }
+        });
+        // 应用当前激活的组合效果
         activeCombos.forEach(combo => {
             switch (combo.effect) {
                 case 'crop_yield_multiplier':
@@ -869,7 +888,31 @@ export class QuestSystem extends BaseSystem {
                     break;
                 case '卡牌':
                     if (entity['deck']) {
-                        // TODO: 实现卡牌奖励逻辑
+                        const cardName = reward.target;
+                        // 简单推断卡牌类型
+                        let cardType = '作物';
+                        if (['小鸡', '奶牛', '羊', '猪'].includes(cardName)) {
+                            cardType = '动物';
+                        }
+                        else if (['锄头', '水桶', '镰刀', '斧头'].includes(cardName)) {
+                            cardType = '工具';
+                        }
+                        else if (['农舍', '仓库', '风车', '小型农舍'].includes(cardName)) {
+                            cardType = '建筑';
+                        }
+                        else if (['工人', '助手'].includes(cardName)) {
+                            cardType = '人物';
+                        }
+                        const newCard = EntityFactory.createCardEntity(cardType, {
+                            identity: { name: cardName, description: `任务奖励卡牌：${cardName}` }
+                        });
+                        // 添加到牌库记录，并在弃牌堆放置可被抽到的实际卡牌实例
+                        // 为了防止同一个对象引用导致的潜在问题，我们深拷贝或者重新创建一个实例用于战斗循环
+                        const playableCard = EntityFactory.createCardEntity(cardType, {
+                            identity: { name: cardName, description: `任务奖励卡牌：${cardName}` }
+                        });
+                        entity['deck'].library.push(newCard);
+                        entity['deck'].discardPile.push(playableCard);
                         console.log(`   获得卡牌: ${reward.target}`);
                     }
                     break;
@@ -1847,6 +1890,172 @@ export class IntentPreviewSystem extends BaseSystem {
     }
 }
 // ==========================================
+// 金币目标系统 - Gold Target System
+// ==========================================
+export class GoldTargetSystem extends BaseSystem {
+    constructor() {
+        super('金币目标管理', 65);
+        this.updateInterval = 1000;
+    }
+    getRequiredComponents() {
+        return ['goldTarget', 'resource', 'world', 'notification'];
+    }
+    filterEntities(entities) {
+        return entities.filter(entity => this.getRequiredComponents().every(type => entity[type]));
+    }
+    update(entities, dt) {
+        const filteredEntities = this.filterEntities(entities);
+        filteredEntities.forEach(entity => {
+            const goldTargetComp = entity['goldTarget'];
+            const worldComp = entity['world'];
+            const notificationComp = entity['notification'];
+            // 检查新的一天
+            const currentDay = worldComp.currentDay;
+            if (currentDay > 1) {
+                const streakBroken = goldTargetComp.checkStreakBreak(currentDay);
+                if (streakBroken) {
+                    notificationComp.sendNotification('系统提示', '🔥 连续完成天数中断', `你昨日未完成金币目标，连续天数已重置为0`, { duration: 3000, priority: 5 });
+                }
+            }
+            // 自动发放可领取的奖励
+            this.autoClaimRewards(entity, goldTargetComp, notificationComp);
+        });
+    }
+    /**
+     * 自动发放已完成目标的奖励
+     */
+    autoClaimRewards(entity, goldTargetComp, notificationComp) {
+        // 领取每日奖励
+        const currentDay = entity['world'].currentDay;
+        const dailyTarget = goldTargetComp.getDailyTarget(currentDay);
+        if (dailyTarget.completed && !dailyTarget.claimed) {
+            const rewards = goldTargetComp.claimDailyReward(currentDay);
+            if (rewards) {
+                this.giveRewards(entity, rewards);
+                notificationComp.sendNotification('奖励获得', `🎉 每日金币目标完成!`, `已领取奖励: ${rewards.map(r => `${r.amount}${r.target}`).join(', ')}`, { duration: 3000, priority: 8, animation: 'bounce' });
+            }
+        }
+        // 领取阶段奖励
+        const currentPhase = goldTargetComp.getCurrentPhase(currentDay);
+        if (currentPhase && currentPhase.completed && !currentPhase.claimed) {
+            const rewards = goldTargetComp.claimPhaseReward(currentPhase.id);
+            if (rewards) {
+                this.giveRewards(entity, rewards);
+                notificationComp.sendNotification('奖励获得', `🏆 阶段金币目标完成!`, `[${currentPhase.name}] 已完成，获得奖励: ${rewards.map(r => `${r.amount}${r.target}`).join(', ')}`, { duration: 4000, priority: 10, animation: 'bounce' });
+            }
+        }
+    }
+    /**
+     * 发放奖励
+     */
+    giveRewards(entity, rewards) {
+        rewards.forEach(reward => {
+            switch (reward.type) {
+                case '资源':
+                    if (entity['resource']) {
+                        entity['resource'].addResource(reward.target, reward.amount);
+                    }
+                    break;
+                case '经验':
+                    if (entity['character']) {
+                        entity['character'].addExperience(reward.amount);
+                    }
+                    break;
+                case '道具':
+                    // 道具逻辑后续扩展
+                    console.log(`获得道具: ${reward.amount}${reward.target}`);
+                    break;
+                case '遗物':
+                    const relicSystem = SystemManager.getInstance().getSystem('遗物系统');
+                    if (relicSystem && reward.target) {
+                        relicSystem.addRelic(entity, reward.target);
+                    }
+                    break;
+            }
+        });
+    }
+    /**
+     * 外部调用：更新金币目标进度
+     * @param entity 玩家实体
+     * @param goldAmount 新增金币数量
+     */
+    updateGoldProgress(entity, goldAmount) {
+        if (!entity['goldTarget'] || !entity['world'] || !entity['notification'])
+            return;
+        const goldTargetComp = entity['goldTarget'];
+        const notificationComp = entity['notification'];
+        const currentDay = entity['world'].currentDay;
+        // 更新进度
+        const result = goldTargetComp.updateProgress(goldAmount, currentDay);
+        // 处理异常情况
+        if (result.isAbnormal) {
+            notificationComp.sendNotification('系统提示', '⚠️ 金币获取异常', '本次金币获取量超过阈值，已限制计入目标进度，请检查是否存在异常操作', { duration: 3000, priority: 10 });
+            console.warn(`⚠️ 金币异常检测: 单日获得${goldAmount}金币，超过当日目标${goldTargetComp.calculateDailyTarget(currentDay)}的3倍`);
+        }
+        // 每日目标完成
+        if (result.dailyCompleted) {
+            notificationComp.sendNotification('任务进度', '✅ 今日金币目标已完成!', `连续完成天数: ${goldTargetComp.currentStreak}天`, { duration: 3000, priority: 8 });
+            // 更新成就进度
+            const achievementSystem = SystemManager.getInstance().getSystem('成就管理');
+            if (achievementSystem) {
+                achievementSystem.updateAchievementProgress(entity, '完成任务', '每日金币目标', 1);
+            }
+        }
+        // 阶段目标完成
+        if (result.phaseCompleted) {
+            notificationComp.sendNotification('任务进度', `🎉 ${result.phaseCompleted.name} 已完成!`, '可以领取阶段奖励啦', { duration: 3000, priority: 9 });
+            // 更新成就进度
+            const achievementSystem = SystemManager.getInstance().getSystem('成就管理');
+            if (achievementSystem) {
+                achievementSystem.updateAchievementProgress(entity, '完成任务', '阶段金币目标', 1);
+            }
+        }
+    }
+    /**
+     * 获取当前进度信息，用于UI显示
+     */
+    getProgressInfo(entity) {
+        if (!entity['goldTarget'] || !entity['world'])
+            return null;
+        const goldTargetComp = entity['goldTarget'];
+        const currentDay = entity['world'].currentDay;
+        const dailyTarget = goldTargetComp.getDailyTarget(currentDay);
+        const currentPhase = goldTargetComp.getCurrentPhase(currentDay);
+        const stats = goldTargetComp.getStats();
+        let phaseProgress = 0;
+        if (currentPhase) {
+            const phaseTotal = goldTargetComp.calculatePhaseProgress(currentPhase);
+            phaseProgress = Math.round((phaseTotal / currentPhase.baseTarget) * 100);
+        }
+        return {
+            currentDay,
+            dailyTarget: dailyTarget.target,
+            dailyCurrent: dailyTarget.current,
+            dailyProgress: Math.round((dailyTarget.current / dailyTarget.target) * 100),
+            dailyCompleted: dailyTarget.completed,
+            dailyClaimed: dailyTarget.claimed,
+            currentPhase: currentPhase ? {
+                name: currentPhase.name,
+                startDay: currentPhase.startDay,
+                endDay: currentPhase.endDay,
+                baseTarget: currentPhase.baseTarget,
+                progress: phaseProgress,
+                completed: currentPhase.completed,
+                claimed: currentPhase.claimed
+            } : null,
+            stats
+        };
+    }
+    /**
+     * 获取异常记录
+     */
+    getAbnormalRecords(entity, limit = 10) {
+        if (!entity['goldTarget'])
+            return [];
+        return entity['goldTarget'].getAbnormalRecords(limit);
+    }
+}
+// ==========================================
 // 默认系统配置
 // ==========================================
 export function createDefaultSystems() {
@@ -1862,6 +2071,7 @@ export function createDefaultSystems() {
         .registerSystem(new ComboSystem())
         .registerSystem(new WorldSystem())
         .registerSystem(new GameStateSystem())
+        .registerSystem(new GoldTargetSystem())
         .registerSystem(new QuestSystem())
         .registerSystem(new AchievementSystem())
         .registerSystem(new DifficultySystem())

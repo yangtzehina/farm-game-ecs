@@ -741,6 +741,135 @@ declare module './components' {
         getUpgradableCards(): any[];
     }
 }
+export interface GoldTargetReward {
+    type: '资源' | '卡牌' | '道具' | '遗物' | '经验';
+    target: string;
+    amount: number;
+    rarity?: string;
+}
+export interface GoldTargetPhase {
+    id: string;
+    name: string;
+    startDay: number;
+    endDay: number;
+    baseTarget: number;
+    rewards: GoldTargetReward[];
+    completed: boolean;
+    claimed: boolean;
+}
+export interface DailyGoldTarget {
+    day: number;
+    target: number;
+    current: number;
+    completed: boolean;
+    claimed: boolean;
+    rewards: GoldTargetReward[];
+}
+/**
+ * GoldTargetComponent - 长线金币目标系统组件
+ * 实现对数成长曲线的每日/阶段金币目标
+ */
+export declare class GoldTargetComponent {
+    static readonly TYPE = "goldTarget";
+    baseDailyTarget: number;
+    logBase: number;
+    growthMultiplier: number;
+    phaseLength: number;
+    phaseRewardMultiplier: number;
+    dailyTargets: DailyGoldTarget[];
+    phases: GoldTargetPhase[];
+    totalGoldEarned: number;
+    currentStreak: number;
+    maxStreak: number;
+    lastClaimedDay: number;
+    abnormalThreshold: number;
+    abnormalRecords: Array<{
+        day: number;
+        goldAmount: number;
+        target: number;
+        timestamp: number;
+        reason: string;
+    }>;
+    constructor(config?: Partial<GoldTargetComponent>);
+    /**
+     * 初始化阶段目标
+     */
+    private initializePhases;
+    /**
+     * 计算指定天数的每日金币目标（对数成长曲线）
+     * 公式：target = baseDailyTarget + growthMultiplier * ln(day)
+     */
+    calculateDailyTarget(day: number): number;
+    /**
+     * 计算阶段基础目标
+     */
+    private calculatePhaseBaseTarget;
+    /**
+     * 生成阶段奖励
+     */
+    private generatePhaseRewards;
+    /**
+     * 生成每日奖励
+     */
+    private generateDailyRewards;
+    /**
+     * 获取或创建指定天数的每日目标
+     */
+    getDailyTarget(day: number): DailyGoldTarget;
+    /**
+     * 更新每日目标进度
+     * @param goldAmount 新增金币数量
+     * @param currentDay 当前游戏天数
+     */
+    updateProgress(goldAmount: number, currentDay: number): {
+        dailyCompleted: boolean;
+        phaseCompleted: GoldTargetPhase | null;
+        isAbnormal: boolean;
+    };
+    /**
+     * 获取当前所属阶段
+     */
+    getCurrentPhase(currentDay: number): GoldTargetPhase | null;
+    /**
+     * 计算阶段目标进度
+     */
+    calculatePhaseProgress(phase: GoldTargetPhase): number;
+    /**
+     * 领取每日奖励
+     */
+    claimDailyReward(day: number): GoldTargetReward[] | false;
+    /**
+     * 领取阶段奖励
+     */
+    claimPhaseReward(phaseId: string): GoldTargetReward[] | false;
+    /**
+     * 检查连续天数是否中断（新的一天开始时调用）
+     */
+    checkStreakBreak(currentDay: number): boolean;
+    /**
+     * 获取当前进度统计
+     */
+    getStats(): {
+        totalGoldEarned: number;
+        currentStreak: number;
+        maxStreak: number;
+        completedDailyCount: number;
+        totalDays: number;
+        completedPhaseCount: number;
+        totalPhases: number;
+        completionRate: number;
+    };
+    /**
+     * 获取异常记录
+     */
+    getAbnormalRecords(limit?: number): {
+        day: number;
+        goldAmount: number;
+        target: number;
+        timestamp: number;
+        reason: string;
+    }[];
+}
 export declare const COMPONENT_REGISTRY: {
     identity: typeof IdentityComponent;
     position: typeof PositionComponent;
@@ -770,6 +899,7 @@ export declare const COMPONENT_REGISTRY: {
     eventSystem: typeof EventSystemComponent;
     relic: typeof RelicComponent;
     intentPreview: typeof IntentPreviewComponent;
+    goldTarget: typeof GoldTargetComponent;
 };
 export declare class EntityFactory {
     static createCardEntity(type: '作物' | '动物' | '工具' | '建筑' | '人物', config?: any): any;

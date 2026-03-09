@@ -64,7 +64,15 @@ export declare class FarmGameEngine {
 export declare function createGameEngine(): FarmGameEngine;
 export declare function startGameEngine(): FarmGameEngine;
 export declare function stopGameEngine(): void;
+declare class EventBus {
+    private listeners;
+    on(key: string, callback: Function): void;
+    off(key: string, callback: Function): void;
+    dispatch(key: string, data?: any): void;
+}
+export declare const globalBus: EventBus;
 export declare function on(entityId: string, event: string, callback: Function): void;
+export declare function off(entityId: string, event: string, callback: Function): void;
 export declare function dispatch(event: string, data?: any): void;
 export declare function handleInput(inputType: string, data?: any): void;
 export declare function giveMoney(amount: number): boolean;
@@ -76,7 +84,9 @@ export declare function getCurrentEnergy(): {
     current: number;
     max: number;
 };
+export declare function getGoldTargetProgress(): any | null;
 export declare function optimizeEngine(): void;
 export declare function reduceGraphicsQuality(): void;
 export declare function increaseQuality(): void;
 export declare function createAndRunGame(): FarmGameEngine;
+export {};

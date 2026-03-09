@@ -324,6 +324,34 @@ export declare class IntentPreviewSystem extends BaseSystem {
      */
     private generateFutureIntents;
 }
+export declare class GoldTargetSystem extends BaseSystem {
+    constructor();
+    getRequiredComponents(): string[];
+    filterEntities(entities: any[]): any[];
+    update(entities: any[], dt: number): void;
+    /**
+     * 自动发放已完成目标的奖励
+     */
+    private autoClaimRewards;
+    /**
+     * 发放奖励
+     */
+    private giveRewards;
+    /**
+     * 外部调用：更新金币目标进度
+     * @param entity 玩家实体
+     * @param goldAmount 新增金币数量
+     */
+    updateGoldProgress(entity: any, goldAmount: number): void;
+    /**
+     * 获取当前进度信息，用于UI显示
+     */
+    getProgressInfo(entity: any): any;
+    /**
+     * 获取异常记录
+     */
+    getAbnormalRecords(entity: any, limit?: number): any;
+}
 export declare function createDefaultSystems(): SystemManager;
 export declare function debugSystemPerformance(systems: BaseSystem[]): void;
 export declare function getSystemDependencies(): any[];

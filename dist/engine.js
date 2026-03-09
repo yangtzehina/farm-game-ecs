@@ -430,14 +430,50 @@ export function stopGameEngine() {
     engine.stop();
 }
 // ==========================================
+// 事件总线 - Event Bus
+// ==========================================
+class EventBus {
+    constructor() {
+        this.listeners = new Map();
+    }
+    on(key, callback) {
+        if (!this.listeners.has(key)) {
+            this.listeners.set(key, []);
+        }
+        this.listeners.get(key).push(callback);
+    }
+    off(key, callback) {
+        const callbacks = this.listeners.get(key);
+        if (callbacks) {
+            const index = callbacks.indexOf(callback);
+            if (index > -1) {
+                callbacks.splice(index, 1);
+            }
+        }
+    }
+    dispatch(key, data) {
+        const callbacks = this.listeners.get(key);
+        if (callbacks) {
+            callbacks.forEach(cb => cb(data));
+        }
+    }
+}
+export const globalBus = new EventBus();
+// ==========================================
 // 事件监听器 - Event Listeners
 // ==========================================
 export function on(entityId, event, callback) {
-    // TODO: 实现事件监听
-    console.log(`📡 事件监听: ${entityId} -> ${event}`);
+    const key = entityId ? `${entityId}:${event}` : event;
+    globalBus.on(key, callback);
+    console.log(`📡 事件监听: ${key}`);
+}
+export function off(entityId, event, callback) {
+    const key = entityId ? `${entityId}:${event}` : event;
+    globalBus.off(key, callback);
+    console.log(`📡 移除事件监听: ${key}`);
 }
 export function dispatch(event, data) {
-    // TODO: 实现事件分发
+    globalBus.dispatch(event, data);
     console.log(`📡 事件分发: ${event}`, data);
 }
 // ==========================================
@@ -466,7 +502,15 @@ export function giveMoney(amount) {
     const engine = FarmGameEngine.getInstance();
     const playerEntity = engine.findEntity(entity => entity.identity?.entityType === '玩家');
     if (playerEntity?.resource) {
-        return playerEntity.resource.addResource('金币', amount);
+        const success = playerEntity.resource.addResource('金币', amount);
+        if (success && amount > 0) {
+            // 更新金币目标进度
+            const goldTargetSystem = engine.getSystemManager().getSystem('金币目标管理');
+            if (goldTargetSystem) {
+                goldTargetSystem.updateGoldProgress(playerEntity, amount);
+            }
+        }
+        return success;
     }
     return false;
 }
@@ -515,6 +559,15 @@ export function getCurrentEnergy() {
         current: player?.energy?.current || 0,
         max: player?.energy?.max || 0
     };
+}
+// 获取金币目标进度
+export function getGoldTargetProgress() {
+    const engine = FarmGameEngine.getInstance();
+    const player = engine.findEntity(e => e.identity?.entityType === '玩家');
+    const goldTargetSystem = engine.getSystemManager().getSystem('金币目标管理');
+    if (!player || !goldTargetSystem)
+        return null;
+    return goldTargetSystem.getProgressInfo(player);
 }
 // ==========================================
 // 性能优化 - Performance Optimization

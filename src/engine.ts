@@ -9,7 +9,8 @@ import {
   BaseSystem,
   SystemManager,
   createDefaultSystems,
-  CardPlaySystem
+  CardPlaySystem,
+  GoldTargetSystem
 } from './systems';
 
 import {
@@ -611,7 +612,15 @@ export function giveMoney(amount: number): boolean {
   const playerEntity = engine.findEntity(entity => entity.identity?.entityType === '玩家');
   
   if (playerEntity?.resource) {
-    return playerEntity.resource.addResource('金币', amount);
+    const success = playerEntity.resource.addResource('金币', amount);
+    if (success && amount > 0) {
+      // 更新金币目标进度
+      const goldTargetSystem = engine.getSystemManager().getSystem<GoldTargetSystem>('金币目标管理');
+      if (goldTargetSystem) {
+        goldTargetSystem.updateGoldProgress(playerEntity, amount);
+      }
+    }
+    return success;
   }
   
   return false;
@@ -673,6 +682,17 @@ export function getCurrentEnergy(): { current: number, max: number } {
     current: player?.energy?.current || 0,
     max: player?.energy?.max || 0
   };
+}
+
+// 获取金币目标进度
+export function getGoldTargetProgress(): any | null {
+  const engine = FarmGameEngine.getInstance();
+  const player = engine.findEntity(e => e.identity?.entityType === '玩家');
+  const goldTargetSystem = engine.getSystemManager().getSystem<GoldTargetSystem>('金币目标管理');
+  
+  if (!player || !goldTargetSystem) return null;
+  
+  return goldTargetSystem.getProgressInfo(player);
 }
 
 // ==========================================

@@ -44,7 +44,10 @@ import {
   RelicComponent,
   Relic,
   IntentPreviewComponent,
-  FutureIntent
+  FutureIntent,
+  GoldTargetComponent,
+  GoldTargetReward,
+  EntityFactory
 } from './components';
 import { EVENTS_CONFIG } from './events.config';
 import { RELICS_CONFIG } from './relics.config';
@@ -2361,6 +2364,229 @@ export class IntentPreviewSystem extends BaseSystem {
 }
 
 // ==========================================
+// 金币目标系统 - Gold Target System
+// ==========================================
+export class GoldTargetSystem extends BaseSystem {
+  constructor() {
+    super('金币目标管理', 65);
+    this.updateInterval = 1000;
+  }
+
+  getRequiredComponents(): string[] {
+    return ['goldTarget', 'resource', 'world', 'notification'];
+  }
+
+  filterEntities(entities: any[]): any[] {
+    return entities.filter(entity => 
+      this.getRequiredComponents().every(type => entity[type])
+    );
+  }
+
+  update(entities: any[], dt: number): void {
+    const filteredEntities = this.filterEntities(entities);
+    
+    filteredEntities.forEach(entity => {
+      const goldTargetComp = entity['goldTarget'] as GoldTargetComponent;
+      const worldComp = entity['world'] as WorldComponent;
+      const notificationComp = entity['notification'] as NotificationComponent;
+      
+      // 检查新的一天
+      const currentDay = worldComp.currentDay;
+      if (currentDay > 1) {
+        const streakBroken = goldTargetComp.checkStreakBreak(currentDay);
+        if (streakBroken) {
+          notificationComp.sendNotification(
+            '系统提示',
+            '🔥 连续完成天数中断',
+            `你昨日未完成金币目标，连续天数已重置为0`,
+            { duration: 3000, priority: 5 }
+          );
+        }
+      }
+      
+      // 自动发放可领取的奖励
+      this.autoClaimRewards(entity, goldTargetComp, notificationComp);
+    });
+  }
+
+  /**
+   * 自动发放已完成目标的奖励
+   */
+  private autoClaimRewards(
+    entity: any,
+    goldTargetComp: GoldTargetComponent,
+    notificationComp: NotificationComponent
+  ): void {
+    // 领取每日奖励
+    const currentDay = entity['world'].currentDay;
+    const dailyTarget = goldTargetComp.getDailyTarget(currentDay);
+    
+    if (dailyTarget.completed && !dailyTarget.claimed) {
+      const rewards = goldTargetComp.claimDailyReward(currentDay);
+      if (rewards) {
+        this.giveRewards(entity, rewards);
+        notificationComp.sendNotification(
+          '奖励获得',
+          `🎉 每日金币目标完成!`,
+          `已领取奖励: ${rewards.map(r => `${r.amount}${r.target}`).join(', ')}`,
+          { duration: 3000, priority: 8, animation: 'bounce' }
+        );
+      }
+    }
+    
+    // 领取阶段奖励
+    const currentPhase = goldTargetComp.getCurrentPhase(currentDay);
+    if (currentPhase && currentPhase.completed && !currentPhase.claimed) {
+      const rewards = goldTargetComp.claimPhaseReward(currentPhase.id);
+      if (rewards) {
+        this.giveRewards(entity, rewards);
+        notificationComp.sendNotification(
+          '奖励获得',
+          `🏆 阶段金币目标完成!`,
+          `[${currentPhase.name}] 已完成，获得奖励: ${rewards.map(r => `${r.amount}${r.target}`).join(', ')}`,
+          { duration: 4000, priority: 10, animation: 'bounce' }
+        );
+      }
+    }
+  }
+
+  /**
+   * 发放奖励
+   */
+  private giveRewards(entity: any, rewards: GoldTargetReward[]): void {
+    rewards.forEach(reward => {
+      switch (reward.type) {
+        case '资源':
+          if (entity['resource']) {
+            entity['resource'].addResource(reward.target, reward.amount);
+          }
+          break;
+        case '经验':
+          if (entity['character']) {
+            entity['character'].addExperience(reward.amount);
+          }
+          break;
+        case '道具':
+          // 道具逻辑后续扩展
+          console.log(`获得道具: ${reward.amount}${reward.target}`);
+          break;
+        case '遗物':
+          const relicSystem = SystemManager.getInstance().getSystem<RelicSystem>('遗物系统');
+          if (relicSystem && reward.target) {
+            relicSystem.addRelic(entity, reward.target);
+          }
+          break;
+      }
+    });
+  }
+
+  /**
+   * 外部调用：更新金币目标进度
+   * @param entity 玩家实体
+   * @param goldAmount 新增金币数量
+   */
+  updateGoldProgress(entity: any, goldAmount: number): void {
+    if (!entity['goldTarget'] || !entity['world'] || !entity['notification']) return;
+    
+    const goldTargetComp = entity['goldTarget'] as GoldTargetComponent;
+    const notificationComp = entity['notification'] as NotificationComponent;
+    const currentDay = entity['world'].currentDay;
+    
+    // 更新进度
+    const result = goldTargetComp.updateProgress(goldAmount, currentDay);
+    
+    // 处理异常情况
+    if (result.isAbnormal) {
+      notificationComp.sendNotification(
+        '系统提示',
+        '⚠️ 金币获取异常',
+        '本次金币获取量超过阈值，已限制计入目标进度，请检查是否存在异常操作',
+        { duration: 3000, priority: 10 }
+      );
+      console.warn(`⚠️ 金币异常检测: 单日获得${goldAmount}金币，超过当日目标${goldTargetComp.calculateDailyTarget(currentDay)}的3倍`);
+    }
+    
+    // 每日目标完成
+    if (result.dailyCompleted) {
+      notificationComp.sendNotification(
+        '任务进度',
+        '✅ 今日金币目标已完成!',
+        `连续完成天数: ${goldTargetComp.currentStreak}天`,
+        { duration: 3000, priority: 8 }
+      );
+      
+      // 更新成就进度
+      const achievementSystem = SystemManager.getInstance().getSystem<AchievementSystem>('成就管理');
+      if (achievementSystem) {
+        achievementSystem.updateAchievementProgress(entity, '完成任务', '每日金币目标', 1);
+      }
+    }
+    
+    // 阶段目标完成
+    if (result.phaseCompleted) {
+      notificationComp.sendNotification(
+        '任务进度',
+        `🎉 ${result.phaseCompleted.name} 已完成!`,
+        '可以领取阶段奖励啦',
+        { duration: 3000, priority: 9 }
+      );
+      
+      // 更新成就进度
+      const achievementSystem = SystemManager.getInstance().getSystem<AchievementSystem>('成就管理');
+      if (achievementSystem) {
+        achievementSystem.updateAchievementProgress(entity, '完成任务', '阶段金币目标', 1);
+      }
+    }
+  }
+
+  /**
+   * 获取当前进度信息，用于UI显示
+   */
+  getProgressInfo(entity: any): any {
+    if (!entity['goldTarget'] || !entity['world']) return null;
+    
+    const goldTargetComp = entity['goldTarget'] as GoldTargetComponent;
+    const currentDay = entity['world'].currentDay;
+    const dailyTarget = goldTargetComp.getDailyTarget(currentDay);
+    const currentPhase = goldTargetComp.getCurrentPhase(currentDay);
+    const stats = goldTargetComp.getStats();
+    
+    let phaseProgress = 0;
+    if (currentPhase) {
+      const phaseTotal = goldTargetComp.calculatePhaseProgress(currentPhase);
+      phaseProgress = Math.round((phaseTotal / currentPhase.baseTarget) * 100);
+    }
+    
+    return {
+      currentDay,
+      dailyTarget: dailyTarget.target,
+      dailyCurrent: dailyTarget.current,
+      dailyProgress: Math.round((dailyTarget.current / dailyTarget.target) * 100),
+      dailyCompleted: dailyTarget.completed,
+      dailyClaimed: dailyTarget.claimed,
+      currentPhase: currentPhase ? {
+        name: currentPhase.name,
+        startDay: currentPhase.startDay,
+        endDay: currentPhase.endDay,
+        baseTarget: currentPhase.baseTarget,
+        progress: phaseProgress,
+        completed: currentPhase.completed,
+        claimed: currentPhase.claimed
+      } : null,
+      stats
+    };
+  }
+
+  /**
+   * 获取异常记录
+   */
+  getAbnormalRecords(entity: any, limit: number = 10) {
+    if (!entity['goldTarget']) return [];
+    return entity['goldTarget'].getAbnormalRecords(limit);
+  }
+}
+
+// ==========================================
 // 默认系统配置
 // ==========================================
 
@@ -2378,6 +2604,7 @@ export function createDefaultSystems(): SystemManager {
     .registerSystem(new ComboSystem())
     .registerSystem(new WorldSystem())
     .registerSystem(new GameStateSystem())
+    .registerSystem(new GoldTargetSystem())
     .registerSystem(new QuestSystem())
     .registerSystem(new AchievementSystem())
     .registerSystem(new DifficultySystem())
