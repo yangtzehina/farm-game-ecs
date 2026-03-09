@@ -429,6 +429,7 @@ export class EnergyComponent {
         Object.assign(this, config);
     }
     spend(amount) {
+        if (amount < 0) return false;
         if (this.current >= amount) {
             this.current -= amount;
             return true;
