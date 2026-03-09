@@ -10,19 +10,26 @@
             padding: 0;
             box-sizing: border-box;
         }
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Special+Elite&display=swap');
+        
         body {
-            font-family: Arial, sans-serif;
-            background: #f5f7fa;
+            font-family: 'Special Elite', cursive;
+            background: #0a0a0f;
+            background-image: url('https://picsum.photos/id/237/1920/1080');
+            background-size: cover;
+            background-blend-mode: multiply;
             height: 100vh;
             overflow: hidden;
             padding: 10px;
+            color: #b3b3b3;
         }
         
         .container {
-            background: white;
-            border-radius: 10px;
+            background: rgba(17, 29, 19, 0.92);
+            border: 2px solid #415d43;
+            border-radius: 2px;
             padding: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(65, 93, 67, 0.2);
             max-width: 1920px;
             height: calc(100vh - 20px);
             margin: 0 auto;
@@ -64,39 +71,55 @@
         }
         
         .btn-primary {
-            background-color: #3498db;
-            color: white;
+            background: linear-gradient(180deg, #415d43, #111d13);
+            color: #8fb996;
+            border: 1px solid #709775;
+            font-family: 'Creepster', cursive;
+            letter-spacing: 1px;
         }
         
         .btn-primary:hover {
-            background-color: #2980b9;
+            background: linear-gradient(180deg, #709775, #415d43);
+            box-shadow: 0 0 10px rgba(112, 151, 117, 0.5);
         }
         
         .btn-danger {
-            background-color: #e74c3c;
-            color: white;
+            background: linear-gradient(180deg, #7d1f1f, #2d0a0a);
+            color: #e8a8a8;
+            border: 1px solid #a83232;
+            font-family: 'Creepster', cursive;
+            letter-spacing: 1px;
         }
         
         .btn-danger:hover {
-            background-color: #c0392b;
+            background: linear-gradient(180deg, #a83232, #7d1f1f);
+            box-shadow: 0 0 10px rgba(168, 50, 50, 0.5);
         }
         
         .btn-warning {
-            background-color: #f39c12;
-            color: white;
+            background: linear-gradient(180deg, #8b6e27, #3b300e);
+            color: #f0d68a;
+            border: 1px solid #b89638;
+            font-family: 'Creepster', cursive;
+            letter-spacing: 1px;
         }
         
         .btn-warning:hover {
-            background-color: #e67e22;
+            background: linear-gradient(180deg, #b89638, #8b6e27);
+            box-shadow: 0 0 10px rgba(184, 150, 56, 0.5);
         }
         
         .btn-success {
-            background-color: #27ae60;
-            color: white;
+            background: linear-gradient(180deg, #415d43, #111d13);
+            color: #8fb996;
+            border: 1px solid #709775;
+            font-family: 'Creepster', cursive;
+            letter-spacing: 1px;
         }
         
         .btn-success:hover {
-            background-color: #229954;
+            background: linear-gradient(180deg, #709775, #415d43);
+            box-shadow: 0 0 10px rgba(112, 151, 117, 0.5);
         }
         
         .btn-sm {
