@@ -29,7 +29,7 @@
             height: 1020px;
             margin: 0 auto;
             display: grid;
-            grid-template-rows: auto auto 1fr 100px;
+            grid-template-rows: auto auto 1fr 130px;
             grid-template-columns: 1fr 260px;
             gap: 4px;
         }
@@ -95,11 +95,6 @@
             color: #f0d68a;
             border: 1px solid #b89638;
             letter-spacing: 1px;
-        }
-        
-        .btn-warning:hover {
-            background: linear-gradient(180deg, #b89638, #8b6e27);
-            box-shadow: 0 0 10px rgba(184, 150, 56, 0.5);
         }
         
         .btn-success {
@@ -172,7 +167,8 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
             display: block;
             margin: 0 auto;
-            max-height: 100%;
+            width: 100%;
+            max-height: 340px;
             width: auto;
         }
 
@@ -286,7 +282,7 @@
             flex-direction: column;
             gap: 4px;
             overflow-y: auto;
-            max-height: 220px;
+            max-height: 200px;
         }
 
         .shop-card {
@@ -321,60 +317,60 @@
             grid-column: 1 / -1;
             background: rgba(52, 152, 219, 0.1);
             border-radius: 4px;
-            padding: 4px;
-            height: 90px;
+            padding: 8px;
+            height: 130px;
             overflow: hidden;
         }
 
         #handArea {
             display: flex;
-            gap: 6px;
+            gap: 10px;
             justify-content: center;
             flex-wrap: nowrap;
             overflow-x: auto;
-            padding-bottom: 3px;
+            padding-bottom: 5px;
             height: 100%;
             align-items: center;
         }
 
         .card {
             flex-shrink: 0;
-            width: 75px;
-            height: 95px;
-            background: rgba(255,255,255,0.9);
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            padding: 4px;
+            width: 90px;
+            height: 115px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            padding: 8px;
             text-align: center;
             cursor: grab;
             border: 2px solid;
         }
 
         .card .icon {
-            font-size: 1.4em;
-            margin-bottom: 2px;
+            font-size: 1.8em;
+            margin-bottom: 5px;
         }
 
         .card .name {
             font-weight: bold;
-            font-size: 0.7em;
-            margin-bottom: 2px;
+            font-size: 0.8em;
+            margin-bottom: 4px;
             color: #222;
         }
 
         .card .desc {
-            font-size: 0.6em;
+            font-size: 0.7em;
             color: #555;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .card .level {
-            font-size: 0.6em;
-            margin-bottom: 2px;
+            font-size: 0.7em;
+            margin-bottom: 4px;
         }
 
         .card .cost {
-            font-size: 0.7em;
+            font-size: 0.8em;
             color: #f39c12;
         }
 
@@ -439,7 +435,7 @@
         <div class="main-content">
             <!-- 游戏画布 -->
             <div class="game-area">
-                <canvas id="gameCanvas" width="800" height="380"></canvas>
+                <canvas id="gameCanvas" width="800" height="340"></canvas>
             </div>
         </div>
 
