@@ -23,15 +23,16 @@
             background: rgba(17, 29, 19, 0.92);
             border: 2px solid #415d43;
             border-radius: 2px;
-            padding: 6px;
+            padding: 4px;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(65, 93, 67, 0.2);
             max-width: 1800px;
-            height: 1020px;
+            height: calc(100vh - 60px); /* 适配页签高度，留出60px给浏览器导航栏 */
+            min-height: 960px;
             margin: 0 auto;
             display: grid;
-            grid-template-rows: auto auto 1fr 130px;
-            grid-template-columns: 1fr 260px;
-            gap: 4px;
+            grid-template-rows: auto auto 1fr 120px;
+            grid-template-columns: 1fr 250px;
+            gap: 3px;
         }
         
         .header {
