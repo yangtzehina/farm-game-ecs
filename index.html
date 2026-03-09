@@ -443,12 +443,29 @@
             </div>
 
             <!-- 金币目标面板 -->
-            <div id="goldTargetPanel" style="background: #fffde7; border-radius: 10px; padding: 10px; flex-shrink: 0;">
-                <h4 style="margin: 0 0 8px 0; font-size: 0.9em;">💰 金币目标</h4>
+            <div id="goldTargetPanel" style="background: rgba(65, 93, 67, 0.3); border: 1px solid #415d43; border-radius: 2px; padding: 10px; flex-shrink: 0;">
+                <h4 style="margin: 0 0 8px 0; font-size: 0.9em; color: #8fb996;">💰 腐化金币目标</h4>
                 <div style="font-size: 0.85em; margin-bottom: 8px;">
                     <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                         <span>今日目标:</span>
-                        <span id="dailyTargetValue">0</span>
+                        <span id="dailyTarget">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>当前:</span>
+                        <span id="currentGold">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span>完成度:</span>
+                        <span id="targetPercent">0%</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background: #111d13; border-radius: 3px; overflow: hidden;">
+                        <div id="targetProgress" style="height: 100%; width: 0%; background: linear-gradient(90deg, #415d43, #8fb996); transition: width 0.3s ease;"></div>
+                    </div>
+                </div>
+                <div style="font-size: 0.8em; color: #709775;">
+                    阶段目标: 第 <span id="currentStage">1</span> 阶段 | 连续完成: <span id="streakDays">0</span> 天
+                </div>
+            </div>getValue">0</span>
                     </div>
                     <div style="background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;">
                         <div id="dailyTargetProgress" style="height: 100%; width: 0%; background: #ffc107; transition: width 0.3s ease;"></div>
