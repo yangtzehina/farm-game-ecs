@@ -361,21 +361,24 @@ class FarmGameEngine {
 
     // 开始拖放
     handArea.addEventListener('dragstart', (e) => {
-      if (e.target.classList.contains('card')) {
+      const cardEl = e.target.closest('.card');
+      if (cardEl) {
         this.draggedCard = {
-          id: e.target.dataset.cardId,
-          cost: parseInt(e.target.dataset.cost),
-          element: e.target
+          id: cardEl.dataset.cardId,
+          cost: parseInt(cardEl.dataset.cost),
+          element: cardEl
         };
-        e.target.style.opacity = '0.5';
+        cardEl.style.opacity = '0.5';
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', cardEl.dataset.cardId);
       }
     });
 
     // 结束拖放
     handArea.addEventListener('dragend', (e) => {
-      if (e.target.classList.contains('card')) {
-        e.target.style.opacity = '1';
+      const cardEl = e.target.closest('.card');
+      if (cardEl) {
+        cardEl.style.opacity = '1';
         this.draggedCard = null;
       }
     });
@@ -396,6 +399,25 @@ class FarmGameEngine {
         }
         // 计算正确的坐标
         const rect = gameArea.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        this.playCard(this.draggedCard, x, y);
+      }
+    });
+    
+    // 允许拖放穿过canvas
+    const canvas = document.getElementById('gameCanvas');
+    canvas.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    canvas.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (this.draggedCard) {
+        if (!this.gameRunning) {
+          this.start();
+        }
+        const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         this.playCard(this.draggedCard, x, y);
