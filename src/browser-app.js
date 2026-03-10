@@ -412,7 +412,7 @@ class FarmGameEngine {
     this.gameState.placedCards.push({
       ...cardData,
       x: x - 50,
-      y: y - 70
+      y: y - 100
     });
 
     // 计算产量加成（遗物/难度加成）
