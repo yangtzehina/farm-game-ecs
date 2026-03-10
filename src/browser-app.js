@@ -361,21 +361,24 @@ class FarmGameEngine {
 
     // 开始拖放
     handArea.addEventListener('dragstart', (e) => {
-      if (e.target.classList.contains('card')) {
+      const cardEl = e.target.closest('.card');
+      if (cardEl) {
         this.draggedCard = {
-          id: e.target.dataset.cardId,
-          cost: parseInt(e.target.dataset.cost),
-          element: e.target
+          id: cardEl.dataset.cardId,
+          cost: parseInt(cardEl.dataset.cost),
+          element: cardEl
         };
-        e.target.style.opacity = '0.5';
+        cardEl.style.opacity = '0.5';
         e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', cardEl.dataset.cardId);
       }
     });
 
     // 结束拖放
     handArea.addEventListener('dragend', (e) => {
-      if (e.target.classList.contains('card')) {
-        e.target.style.opacity = '1';
+      const cardEl = e.target.closest('.card');
+      if (cardEl) {
+        cardEl.style.opacity = '1';
         this.draggedCard = null;
       }
     });
@@ -389,8 +392,35 @@ class FarmGameEngine {
     // 放置卡牌到游戏区域
     gameArea.addEventListener('drop', (e) => {
       e.preventDefault();
-      if (this.draggedCard && this.gameRunning) {
-        this.playCard(this.draggedCard, e.offsetX, e.offsetY);
+      if (this.draggedCard) {
+        // 未开始游戏自动开始
+        if (!this.gameRunning) {
+          this.start();
+        }
+        // 计算正确的坐标
+        const rect = gameArea.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        this.playCard(this.draggedCard, x, y);
+      }
+    });
+    
+    // 允许拖放穿过canvas
+    const canvas = document.getElementById('gameCanvas');
+    canvas.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+    canvas.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (this.draggedCard) {
+        if (!this.gameRunning) {
+          this.start();
+        }
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        this.playCard(this.draggedCard, x, y);
       }
     });
 
@@ -404,15 +434,25 @@ class FarmGameEngine {
       return;
     }
 
+    // 查找卡牌数据
+    const cardData = this.gameState.handCards.find(c => c.id === card.id);
+    if (!cardData) {
+      this.showMessage(`❌ 找不到卡牌数据：${card.id}`, '#e74c3c');
+      return;
+    }
+
     // 扣除能量
     this.gameState.energy -= card.cost;
 
+    // 限制坐标，保证卡牌完全在画布内
+    const clampedX = Math.max(0, Math.min(x - 50, this.canvas.width - 100));
+    const clampedY = Math.max(0, Math.min(y - 70, this.canvas.height - 140));
+
     // 添加到已放置卡牌
-    const cardData = this.gameState.handCards.find(c => c.id === card.id);
     this.gameState.placedCards.push({
       ...cardData,
-      x: x - 50,
-      y: y - 100
+      x: clampedX,
+      y: clampedY
     });
 
     // 计算产量加成（遗物/难度加成）
