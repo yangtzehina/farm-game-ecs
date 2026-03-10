@@ -434,15 +434,25 @@ class FarmGameEngine {
       return;
     }
 
+    // 查找卡牌数据
+    const cardData = this.gameState.handCards.find(c => c.id === card.id);
+    if (!cardData) {
+      this.showMessage(`❌ 找不到卡牌数据：${card.id}`, '#e74c3c');
+      return;
+    }
+
     // 扣除能量
     this.gameState.energy -= card.cost;
 
+    // 限制坐标，保证卡牌完全在画布内
+    const clampedX = Math.max(0, Math.min(x - 50, this.canvas.width - 100));
+    const clampedY = Math.max(0, Math.min(y - 70, this.canvas.height - 140));
+
     // 添加到已放置卡牌
-    const cardData = this.gameState.handCards.find(c => c.id === card.id);
     this.gameState.placedCards.push({
       ...cardData,
-      x: x - 50,
-      y: y - 100
+      x: clampedX,
+      y: clampedY
     });
 
     // 计算产量加成（遗物/难度加成）
