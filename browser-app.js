@@ -389,8 +389,16 @@ class FarmGameEngine {
     // 放置卡牌到游戏区域
     gameArea.addEventListener('drop', (e) => {
       e.preventDefault();
-      if (this.draggedCard && this.gameRunning) {
-        this.playCard(this.draggedCard, e.offsetX, e.offsetY);
+      if (this.draggedCard) {
+        // 未开始游戏自动开始
+        if (!this.gameRunning) {
+          this.start();
+        }
+        // 计算正确的坐标
+        const rect = gameArea.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        this.playCard(this.draggedCard, x, y);
       }
     });
 
