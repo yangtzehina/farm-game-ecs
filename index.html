@@ -24,14 +24,14 @@
             background: rgba(17, 29, 19, 0.92);
             border: none;
             border-radius: 0;
-            padding: 6px;
+            padding: 4px;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(65, 93, 67, 0.2);
             width: 100%;
             max-width: 1800px;
-            height: 1020px;
+            height: 100vh;
             margin: 0 auto;
             display: grid;
-            grid-template-rows: auto auto auto 110px;
+            grid-template-rows: auto 40px 1fr 100px;
             grid-template-columns: 1fr 230px;
             gap: 2px;
         }
@@ -120,15 +120,16 @@
             grid-column: 1 / -1;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
+            gap: 4px;
             background: rgba(248, 249, 250, 0.05);
-            padding: 6px;
+            padding: 2px;
             border-radius: 4px;
+            height: 45px;
         }
         
         .stat {
             background: rgba(255,255,255,0.05);
-            padding: 4px;
+            padding: 2px;
             border-radius: 3px;
             border: 1px solid rgba(233, 236, 239, 0.1);
             text-align: center;
