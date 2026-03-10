@@ -571,4 +571,32 @@
   },
   "CARD_115": {
     "name": "神话镰刀",
-    "prompt": "lovecraftian horror, legendary corrupted mythic sickle, massive blade made of pulsating dark energy, sharp edges dripping with reality-bending black slime, handle made of fused bone and tentacles, dozens of glowing purple eyes along the blade, immense power radiating, grotesque, transparent background, 100x140, card art style
+    "prompt": "lovecraftian horror, legendary corrupted mythic sickle, massive blade made of pulsating dark energy, sharp edges dripping with reality-bending black slime, handle made of fused bone and tentacles, dozens of glowing purple eyes along the blade, immense power radiating, grotesque, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_115_mythic_sickle.png"
+  },
+  "CARD_116": {
+    "name": "时空水壶",
+    "prompt": "lovecraftian horror, legendary corrupted time-space watering can, pulsating iridescent flesh body, spout spraying reality-warping liquid, tentacle handle, dozens of glowing rainbow eyes, oozing glowing slime that warps time, immense power radiating, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_116_time_watering_can.png"
+  },
+  "CARD_117": {
+    "name": "黄金仓库",
+    "prompt": "lovecraftian horror, legendary corrupted golden warehouse, massive building made of solid gold and pulsating flesh, door that is a giant gaping mouth full of golden teeth, dozens of glowing golden eyes all over the walls, oozing golden slime, immense power radiating, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_117_golden_warehouse.png"
+  },
+  "CARD_118": {
+    "name": "天堂农场",
+    "prompt": "lovecraftian horror, legendary corrupted paradise farm, massive floating organic complex made of glowing flesh and crystal, dozens of giant glowing rainbow eyes, tentacle spires reaching into the sky, oozing holy golden slime, reality warping around it, immense power radiating, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_118_paradise_farm.png"
+  },
+  "CARD_119": {
+    "name": "神之恩赐",
+    "prompt": "lovecraftian horror, legendary divine blessing from the old ones, glowing golden energy vortex, dozens of giant golden eyes floating in it, tentacles of light reaching out, oozing golden holy slime, immense power radiating, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_119_divine_blessing.png"
+  },
+  "CARD_120": {
+    "name": "末日蝗灾",
+    "prompt": "lovecraftian horror, legendary apocalyptic locust swarm, massive dark vortex of mutated locusts with multiple eyes and sharp teeth, glowing red eyes filling the sky, oozing black corrosive slime, destroying everything in their path, immense power radiating, transparent background, 100x140, card art style, no borders",
+    "filename": "CARD_120_apocalypse_locust.png"
+  }
+}
